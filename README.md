@@ -1,1 +1,43 @@
-# noletorious-todo-base
+# noletorious-base
+
+A full-stack app with all the important components.
+
+## The prompt
+
+I'll be using copilot that is using claude sonnet 4. Let's work on canvasing a list of sequence prompts that build the app. I'll provide the core prompt...
+
+I want to build an app that is a starter for all my other apps. The features:
+
+- Built with vitejs, tailwindcss, stripe, supabase, prisma
+
+- A simple todo manager app that has AGILE methodology for anyone. It has three main views, a todo backlog and a kanban. The kanban needs to be drag and drop, us a common library that uses that. Each todo can be assigned a "label" that is meant for organizing, there can be traditional information attached to it like description, a photo, a due date, the ability to be added to the kanban by setting to "Selected" like in the traditional AGILE format, etc. Have the backlog view, drag and drop too.
+
+- There will be a third view, a dashboard. Where the user can come, see latest news, a nice list with graphs that show the top performers of the S&P 500. The weather if there location is given. If not, weather for a few key places around the world. One main main highlight in the dashboard is the prompting the user of their most important task which is in their "In progress" or the like lane in the kanban.
+
+- The user can search for a todo user words and sophistacated search.
+
+- The dashboard is a paid view too.
+
+- The cost is simple, $5 a month.
+
+- In the future the app will show traditional stats on your burn down and velocity on doing what you need to do, which is a paid feature.
+
+- The app is meant to extend AGILE methodology to everyone.
+
+- The user has a access to a slide in type of menu, commonly used in google pages, that has a list. If the user is logged out, the list is: Log in, Bold Upgrade button which takes you to the appropriate stripe page, About which is just a tooltip that tells the mission of the app, some text about upgrading allows users to create multiple projects and have access to a dashboard. If logged in and not paid, have a spot for an advertisement, have a bold Upgrade button which takes you to the appropriate stripe page, About with the same tool tip information. If logged in and paid, have Log out, About.
+
+- Include in the menu a light, dark and system toggle.
+
+- Try to make fun colors and keep components screen reader accessible friendly, when in doubt, follow best practice.
+
+This should have all the components of a full-stack app.
+
+- User authentication
+
+- User login
+
+- Gated features only enabled if logged in and paid
+
+- Data persists on most recent session
+
+- Scalability
