@@ -1,6 +1,6 @@
-# noletorious-base
+# noletorious-todo-base
 
-A full-stack app with all the important components.
+A full-stack app with all the important components. It should allow for extendability to more app production.
 
 ## The prompt
 
