@@ -1,6 +1,47 @@
-# noletorious-todo-base
+# Agile Starter Kit 🚀
 
-A full-stack app with all the important components. It should allow for extendability to more app production.
+This is a premium, feature-rich starter application built with **Vite, React, Tailwind CSS, and Zustand**. It is designed to be the foundation for future apps, featuring AGILE methodology tools.
+
+## Features
+
+- **🎨 Modern Design**: Custom "Fun" color palette (Violet/Cyan/Rose), glassmorphism, and smooth animations.
+- **🌗 Dark Mode**: Full system/light/dark toggle support.
+- **📋 Backlog Manager**: Sophisticated search, rich task details, and easy "Select/Start" workflow.
+- **🏗️ Kanban Board**: Drag-and-drop powered interface (using `@dnd-kit`) to manage task status.
+- **📊 Pro Dashboard**: A paid-only view featuring S&P 500 charts, news feed, and "Highlight Task" widgets.
+- **🔐 Auth & Payments Simulation**:
+  - **Sidebar** reacts to "Logged In" and "Pro" states.
+  - **Upgrade Button** simulates Stripe flow.
+- **📱 Responsive**: Mobile-ready "Google-style" slide-in sidebar.
+
+## Tech Stack
+
+- **Framework**: Vite + React + TypeScript
+- **Styling**: Tailwind CSS (PostCSS method with CSS Variables)
+- **State Management**: Zustand
+- **Database (Ready)**: Prisma + Supabase schema configuration included.
+- **Icons**: Lucide React
+- **Charts**: Recharts
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:5173](http://localhost:5173).
+
+## simulated Features
+
+- **Log In**: Click "Log In" in the sidebar to simulate user authentication.
+- **Upgrade**: Click "Upgrade" to simulate a Stripe subscription and unlock the Dashboard.
+- **Theme**: Toggle the sun/moon icon at the bottom of the sidebar.
 
 ## The prompt
 
@@ -37,7 +78,3 @@ This should have all the components of a full-stack app.
 - User login
 
 - Gated features only enabled if logged in and paid
-
-- Data persists on most recent session
-
-- Scalability
