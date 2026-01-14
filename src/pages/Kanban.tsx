@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -21,7 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useTodoStore, type Todo, type Status } from '../store/todoStore';
 import { cn } from '../lib/utils';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Loader2 } from 'lucide-react';
 
 // --- Components ---
 
@@ -96,8 +96,13 @@ function Column({ id, title, items }: { id: Status; title: string; items: Todo[]
 // --- Main Page ---
 
 export default function Kanban() {
-  const { todos, updateTodo } = useTodoStore();
+  const { todos, updateTodo, fetchTodos, loading } = useTodoStore();
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTodos();
+  }, [fetchTodos]);
+
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -154,6 +159,14 @@ export default function Kanban() {
   };
 
   const activeTodo = activeId ? todos.find(t => t.id === activeId) : null;
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col animate-in fade-in duration-500">

@@ -1,35 +1,36 @@
 import { create } from 'zustand';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  isPaid: boolean;
-}
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 
 interface AuthState {
+  session: Session | null;
   user: User | null;
-  login: () => void;
-  logout: () => void;
-  upgrade: () => void;
-  downgrade: () => void;
+  loading: boolean;
+  setSession: (session: Session | null) => void;
+  initialize: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null, // Start logged out
-  login: () => set({ 
-    user: { 
-      id: '1', 
-      name: 'Demo User', 
-      email: 'demo@example.com', 
-      isPaid: false 
-    } 
-  }),
-  logout: () => set({ user: null }),
-  upgrade: () => set((state) => ({ 
-    user: state.user ? { ...state.user, isPaid: true } : null 
-  })),
-  downgrade: () => set((state) => ({ 
-    user: state.user ? { ...state.user, isPaid: false } : null 
-  })),
+  session: null,
+  user: null,
+  loading: true,
+  setSession: (session) => set({ session, user: session?.user ?? null, loading: false }),
+  initialize: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      set({ session, user: session?.user ?? null, loading: false });
+
+      supabase.auth.onAuthStateChange((_event, session) => {
+        set({ session, user: session?.user ?? null, loading: false });
+      });
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      set({ loading: false });
+    }
+  },
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ session: null, user: null });
+  },
 }));

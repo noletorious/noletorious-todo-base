@@ -1,5 +1,6 @@
 datasource db {
-  provider = "postgresql"
+  provider     = "postgresql"
+  relationMode = "foreignKeys"
 }
 
 generator client {
@@ -7,14 +8,14 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id // matches Supabase Auth UUID
   email     String   @unique
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  stripeCustomerId String?
-  isPro            Boolean @default(false)
+  stripeCustomerId String? @unique
+  isPremium        Boolean @default(false)
   
   todos     Todo[]
 }
@@ -29,6 +30,8 @@ model Todo {
   dueDate     DateTime?
   imageUrl    String?
   order       Float    @default(0) // For drag and drop ranking
+  
+  completed   Boolean  @default(false) // New field
   
   userId      String
   user        User     @relation(fields: [userId], references: [id])
