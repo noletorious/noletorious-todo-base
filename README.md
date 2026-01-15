@@ -49,6 +49,7 @@ This application implements **Row Level Security (RLS)** to ensure data isolatio
 - **🔐 Auth Integration**: Security policies integrated with Supabase Auth (`auth.uid()`)
 
 The database policies ensure that:
+
 - Users can only view/edit their own todos (`userId` matches `auth.uid()`)
 - Users can only access their own profile data (`id` matches `auth.uid()`)
 - All CRUD operations are properly secured at the database level
