@@ -13,29 +13,30 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   stripeCustomerId String? @unique
   isPremium        Boolean @default(false)
-  
-  todos     Todo[]
+
+  todos Todo[]
 }
 
 model Todo {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String?
-  status      String   @default("BACKLOG") // BACKLOG, TODO, IN_PROGRESS, DONE
-  label       String?  // "Bug", "Feature", etc.
-  priority    String?  // "Low", "Medium", "High"
+  status      String    @default("BACKLOG") // BACKLOG, TODO, IN_PROGRESS, DONE
+  label       String? // "Bug", "Feature", etc.
+  priority    String? // "LOW", "MEDIUM", "HIGH"
   dueDate     DateTime?
   imageUrl    String?
-  order       Float    @default(0) // For drag and drop ranking
-  
-  completed   Boolean  @default(false) // New field
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  order       Float     @default(0) // For drag and drop ranking
+
+  completed Boolean @default(false)
+  selected  Boolean @default(false) // For AGILE backlog selection
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -1,7 +1,11 @@
-import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
+import { useTodoInitialization } from "../../hooks/useTodoInitialization";
 
 export default function Layout() {
+  // Initialize todos when user enters protected routes
+  useTodoInitialization();
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
       <Sidebar />

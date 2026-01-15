@@ -1,8 +1,11 @@
-import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../lib/supabase';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { v4 as uuidv4 } from "uuid";
+import { supabase } from "../lib/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
-export type Status = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type Status = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE";
+export type Priority = "LOW" | "MEDIUM" | "HIGH";
 
 export interface Todo {
   id: string;
@@ -10,140 +13,484 @@ export interface Todo {
   description?: string;
   status: Status;
   label?: string;
-  dueDate?: string; // ISO Status
+  priority?: Priority;
+  dueDate?: string; // ISO string
+  imageUrl?: string;
   order: number;
   completed?: boolean;
+  userId?: string;
+  selected?: boolean; // For backlog selection (AGILE methodology)
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface TodoState {
   todos: Todo[];
   loading: boolean;
   error: string | null;
+  selectedTodos: Todo[]; // For selected todos in backlog
+  subscription: RealtimeChannel | null; // For real-time subscription cleanup
+
+  // Basic CRUD operations
   fetchTodos: () => Promise<void>;
   addTodo: (todo: Partial<Todo>) => Promise<void>;
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   setTodos: (todos: Todo[]) => void;
+
+  // Selection operations for AGILE methodology
+  selectTodo: (id: string) => Promise<void>;
+  unselectTodo: (id: string) => Promise<void>;
+  moveSelectedToKanban: () => Promise<void>;
+
+  // Bulk operations
+  bulkUpdateOrder: (
+    updates: { id: string; order: number; status?: Status }[]
+  ) => Promise<void>;
+
+  // Initialization and cleanup
+  initializeTodos: () => Promise<void>;
+  cleanupSubscription: () => void;
+  clearTodos: () => void;
 }
 
-export const useTodoStore = create<TodoState>((set, get) => ({
-  todos: [],
-  loading: false,
-  error: null,
+export const useTodoStore = create<TodoState>()(
+  persist(
+    (set, get) => ({
+      todos: [],
+      loading: false,
+      error: null,
+      selectedTodos: [],
+      subscription: null,
 
-  fetchTodos: async () => {
-    set({ loading: true, error: null });
-    try {
-      const { data, error } = await supabase
-        .from('Todo')
-        .select('*')
-        .order('order', { ascending: true });
+      fetchTodos: async () => {
+        console.log(
+          "🚀 fetchTodos called - current loading state:",
+          get().loading
+        );
 
-      if (error) throw error;
-      
-      // Map Supabase data to our Todo Type (handling any discrepancies if needed)
-      set({ todos: data as Todo[] });
-    } catch (err: any) {
-      console.error('Error fetching todos:', err);
-      set({ error: err.message });
-    } finally {
-      set({ loading: false });
-    }
-  },
+        // Prevent multiple simultaneous fetches
+        if (get().loading) {
+          console.log("⏸️ Already loading, skipping fetch");
+          return;
+        }
 
-  addTodo: async (todo) => {
-    // 1. Optimistic Update
-    const tempId = uuidv4();
-    const newTodo: Todo = {
-      id: tempId,
-      title: todo.title || 'New Task',
-      status: todo.status || 'BACKLOG',
-      label: todo.label,
-      description: todo.description,
-      order: get().todos.length,
-      completed: false,
-      ...todo,
-    } as Todo;
+        console.log("📊 Setting loading to true...");
+        set({ loading: true, error: null });
 
-    set((state) => ({ todos: [...state.todos, newTodo] }));
+        try {
+          console.log("🔑 Getting authenticated user...");
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser();
 
-    try {
-      // 2. Call API
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not logged in');
+          if (authError) {
+            console.error("❌ Auth error:", authError);
+            throw new Error(`Auth error: ${authError.message}`);
+          }
 
-      // We need to exclude 'id' if we want the DB to generate it, OR we generate it.
-      // But we passed tempId. If we want DB to authorize, we need to send userId.
-      const taskPayload = {
-        ...newTodo,
-        id: undefined, // Let DB generate ID? relying on @default(uuid())
-        userId: user.id
-      };
-      // actually if we want to use the tempId, we can. But usually client-side IDs are risky if not careful.
-      // Let's rely on DB generation for safety, meaning we must swap the ID back.
+          if (!user) {
+            console.log("❌ No user found during fetch");
+            set({ todos: [], selectedTodos: [], loading: false });
+            return;
+          }
 
-      const { data, error } = await supabase
-        .from('Todo')
-        .insert([taskPayload])
-        .select()
-        .single();
-        
-      if (error) throw error;
+          console.log("✅ User found:", user.id);
+          console.log("📧 User email:", user.email);
 
-      // 3. Replace temp todo with real one
-      set((state) => ({
-          todos: state.todos.map(t => t.id === tempId ? (data as Todo) : t)
-      }));
+          console.log("🏗️ Querying todos from database...");
+          const { data, error } = await supabase
+            .from("Todo")
+            .select("*")
+            .eq("userId", user.id)
+            .order("order", { ascending: true });
 
-    } catch (err: any) {
-      console.error('Error adding todo:', err);
-      // Revert optimistic update
-      set((state) => ({ todos: state.todos.filter(t => t.id !== tempId) }));
-      set({ error: err.message });
-    }
-  },
+          if (error) {
+            console.error("❌ Database error:", error);
+            throw error;
+          }
 
-  updateTodo: async (id, updates) => {
-    // 1. Optimistic Update
-    const previousTodos = get().todos;
-    set((state) => ({
-      todos: state.todos.map((t) => (t.id === id ? { ...t, ...updates } : t))
-    }));
+          console.log(
+            "✅ Database query successful! Found",
+            data?.length || 0,
+            "todos"
+          );
+          console.log("📋 Todos data:", data);
 
-    try {
-        // 2. Call API
-        const { error } = await supabase
-            .from('Todo')
-            .update(updates)
-            .eq('id', id);
-            
-        if (error) throw error;
-    } catch (err: any) {
-        console.error('Error updating todo:', err);
-        // Revert
-        set({ todos: previousTodos, error: err.message });
-    }
-  },
+          // Map Supabase data to our Todo Type and extract selected todos
+          const todos = (data as Todo[]) || [];
+          const selectedTodos = todos.filter((todo) => todo.selected);
 
-  deleteTodo: async (id) => {
-      // 1. Optimistic Update
-      const previousTodos = get().todos;
-      set((state) => ({
-          todos: state.todos.filter((t) => t.id !== id)
-      }));
+          console.log("🎯 Setting todos in state:", {
+            todosCount: todos.length,
+            selectedCount: selectedTodos.length,
+          });
+          set({ todos, selectedTodos });
 
-      try {
-          const { error } = await supabase
-            .from('Todo')
-            .delete()
-            .eq('id', id);
+          console.log("✅ fetchTodos completed successfully!");
+        } catch (err: unknown) {
+          console.error("💥 Error in fetchTodos:", err);
+          set({
+            error: err instanceof Error ? err.message : "An error occurred",
+          });
+        } finally {
+          console.log("🏁 Setting loading to false...");
+          set({ loading: false });
+          console.log("🏁 Loading state after finally:", get().loading);
+        }
+      },
+
+      addTodo: async (todo) => {
+        const tempId = uuidv4();
+
+        try {
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser();
+          console.log("Auth check:", { user: user?.id, authError });
+
+          if (authError || !user) {
+            throw new Error("User not logged in");
+          }
+
+          // Test RLS by trying a simple select first
+          console.log("Testing RLS with select...");
+          const { data: testData, error: testError } = await supabase
+            .from("Todo")
+            .select("id")
+            .limit(1);
+
+          console.log("Test result:", { testData, testError });
+
+          // If select works, try insert
+          console.log("Attempting insert with user ID:", user.id);
+
+          // 1. Optimistic Update
+          const newTodo: Todo = {
+            id: tempId,
+            title: todo.title || "New Task",
+            status: todo.status || "BACKLOG",
+            label: todo.label,
+            description: todo.description,
+            priority: todo.priority || "MEDIUM",
+            order: todo.order || Date.now(),
+            completed: false,
+            selected: false,
+            userId: user.id,
+            ...todo,
+          } as Todo;
+
+          set((state) => ({ todos: [...state.todos, newTodo] }));
+
+          // 2. Call API - Let DB generate ID for safety
+          const taskPayload = {
+            title: newTodo.title,
+            description: newTodo.description,
+            status: newTodo.status,
+            label: newTodo.label,
+            priority: newTodo.priority,
+            dueDate: newTodo.dueDate
+              ? new Date(newTodo.dueDate).toISOString()
+              : null,
+            imageUrl: newTodo.imageUrl,
+            order: newTodo.order,
+            completed: newTodo.completed,
+            selected: newTodo.selected,
+            userId: user.id,
+          };
+
+          const { data, error } = await supabase
+            .from("Todo")
+            .insert([taskPayload])
+            .select()
+            .single();
 
           if (error) throw error;
-      } catch (err: any) {
-          console.error('Error deleting todo:', err);
-          set({ todos: previousTodos, error: err.message });
-      }
-  },
 
-  setTodos: (todos) => set({ todos }),
-}));
+          // 3. Replace temp todo with real one
+          set((state) => ({
+            todos: state.todos.map((t) =>
+              t.id === tempId ? (data as Todo) : t
+            ),
+          }));
+        } catch (err: unknown) {
+          console.error("Error adding todo:", err);
+          // Revert optimistic update
+          set((state) => ({
+            todos: state.todos.filter((t) => t.id !== tempId),
+          }));
+          set({
+            error: err instanceof Error ? err.message : "An error occurred",
+          });
+        }
+      },
+
+      updateTodo: async (id, updates) => {
+        // 1. Optimistic Update
+        const previousTodos = get().todos;
+        set((state) => ({
+          todos: state.todos.map((t) =>
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        }));
+
+        try {
+          // 2. Call API
+          const { error } = await supabase
+            .from("Todo")
+            .update(updates)
+            .eq("id", id);
+
+          if (error) throw error;
+        } catch (err: unknown) {
+          console.error("Error updating todo:", err);
+          // Revert
+          set({
+            todos: previousTodos,
+            error: err instanceof Error ? err.message : "An error occurred",
+          });
+        }
+      },
+
+      deleteTodo: async (id) => {
+        // 1. Optimistic Update
+        const previousTodos = get().todos;
+        set((state) => ({
+          todos: state.todos.filter((t) => t.id !== id),
+        }));
+
+        try {
+          const { error } = await supabase.from("Todo").delete().eq("id", id);
+
+          if (error) throw error;
+        } catch (err: unknown) {
+          console.error("Error deleting todo:", err);
+          set({
+            todos: previousTodos,
+            error: err instanceof Error ? err.message : "An error occurred",
+          });
+        }
+      },
+
+      setTodos: (todos) => set({ todos }),
+
+      // Selection operations for AGILE methodology
+      selectTodo: async (id) => {
+        const todo = get().todos.find((t) => t.id === id);
+        if (!todo) return;
+
+        // Add to selected list and update todo
+        set((state) => ({
+          selectedTodos: [
+            ...state.selectedTodos.filter((t) => t.id !== id),
+            { ...todo, selected: true },
+          ],
+          todos: state.todos.map((t) =>
+            t.id === id ? { ...t, selected: true } : t
+          ),
+        }));
+
+        // Update in database
+        try {
+          await get().updateTodo(id, { selected: true });
+        } catch (err: unknown) {
+          console.error("Error selecting todo:", err);
+        }
+      },
+
+      unselectTodo: async (id) => {
+        set((state) => ({
+          selectedTodos: state.selectedTodos.filter((t) => t.id !== id),
+          todos: state.todos.map((t) =>
+            t.id === id ? { ...t, selected: false } : t
+          ),
+        }));
+
+        // Update in database
+        try {
+          await get().updateTodo(id, { selected: false });
+        } catch (err: unknown) {
+          console.error("Error unselecting todo:", err);
+        }
+      },
+
+      moveSelectedToKanban: async () => {
+        const { selectedTodos } = get();
+        const updates = selectedTodos.map((todo) => ({
+          id: todo.id,
+          status: "TODO" as Status,
+          selected: false,
+        }));
+
+        // Update all selected todos to TODO status
+        for (const update of updates) {
+          await get().updateTodo(update.id, {
+            status: update.status,
+            selected: update.selected,
+          });
+        }
+
+        set({ selectedTodos: [] });
+      },
+
+      bulkUpdateOrder: async (updates) => {
+        // Optimistic update
+        const previousTodos = get().todos;
+        set((state) => ({
+          todos: state.todos.map((todo) => {
+            const update = updates.find((u) => u.id === todo.id);
+            return update
+              ? {
+                  ...todo,
+                  order: update.order,
+                  ...(update.status && { status: update.status }),
+                }
+              : todo;
+          }),
+        }));
+
+        try {
+          // Batch update in database
+          for (const update of updates) {
+            await supabase
+              .from("Todo")
+              .update({
+                order: update.order,
+                ...(update.status && { status: update.status }),
+              })
+              .eq("id", update.id);
+          }
+        } catch (err: unknown) {
+          console.error("Error bulk updating todos:", err);
+          set({
+            todos: previousTodos,
+            error: err instanceof Error ? err.message : "An error occurred",
+          });
+        }
+      },
+
+      // Initialization and cleanup methods
+      initializeTodos: async () => {
+        console.log("Initializing todos...");
+
+        // Prevent multiple simultaneous initializations
+        if (get().loading) {
+          console.log("Already initializing, skipping...");
+          return;
+        }
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("Error getting user:", userError);
+          set({ loading: false, error: userError.message });
+          return;
+        }
+
+        // Clean up any existing subscription first
+        get().cleanupSubscription();
+
+        if (user) {
+          console.log("User found, fetching todos for:", user.id);
+
+          try {
+            // Let fetchTodos handle its own loading state management
+            await get().fetchTodos();
+
+            // Only set up subscription if fetchTodos was successful
+            const channel = supabase
+              .channel(`todos-${user.id}`)
+              .on(
+                "postgres_changes",
+                {
+                  event: "*",
+                  schema: "public",
+                  table: "Todo",
+                  filter: `userId=eq.${user.id}`,
+                },
+                (payload) => {
+                  console.log("Real-time change:", payload);
+                  // Handle specific events to avoid unnecessary refetches
+                  const currentTodos = get().todos;
+
+                  if (payload.eventType === "INSERT" && payload.new) {
+                    const newTodo = payload.new as Todo;
+                    // Only add if not already in store (avoid duplicates from optimistic updates)
+                    if (!currentTodos.find((t) => t.id === newTodo.id)) {
+                      set((state) => ({
+                        todos: [...state.todos, newTodo].sort(
+                          (a, b) => a.order - b.order
+                        ),
+                      }));
+                    }
+                  } else if (payload.eventType === "UPDATE" && payload.new) {
+                    const updatedTodo = payload.new as Todo;
+                    set((state) => ({
+                      todos: state.todos.map((t) =>
+                        t.id === updatedTodo.id ? updatedTodo : t
+                      ),
+                    }));
+                  } else if (payload.eventType === "DELETE" && payload.old) {
+                    const deletedId = payload.old.id;
+                    set((state) => ({
+                      todos: state.todos.filter((t) => t.id !== deletedId),
+                    }));
+                  }
+                }
+              )
+              .subscribe((status) => {
+                console.log("Subscription status:", status);
+                if (status === "SUBSCRIBED") {
+                  console.log("Successfully subscribed to todo changes");
+                } else if (status === "CHANNEL_ERROR") {
+                  console.error("Subscription error");
+                  // Clean up and don't retry to avoid infinite loops
+                  get().cleanupSubscription();
+                }
+              });
+
+            set({ subscription: channel });
+          } catch (error) {
+            console.error("Error during initialization:", error);
+            set({
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Initialization failed",
+            });
+          }
+        } else {
+          console.log("No user found, clearing todos");
+          set({ todos: [], selectedTodos: [], loading: false });
+        }
+      },
+
+      cleanupSubscription: () => {
+        const { subscription } = get();
+        if (subscription) {
+          subscription.unsubscribe();
+          set({ subscription: null });
+        }
+      },
+
+      clearTodos: () => {
+        get().cleanupSubscription();
+        set({ todos: [], selectedTodos: [], error: null });
+      },
+    }),
+    {
+      name: "todo-storage",
+      storage: createJSONStorage(() => localStorage),
+      // Only persist UI preferences, not sensitive data or subscription objects
+      partialize: (state) => ({
+        selectedTodos: state.selectedTodos,
+        // Exclude subscription and other non-serializable data
+      }),
+    }
+  )
+);

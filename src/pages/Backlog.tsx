@@ -1,110 +1,267 @@
-import { useState } from 'react';
-import { useTodoStore, type Todo } from '../store/todoStore';
-import { Search, Plus, Calendar, Tag, ArrowRight, MoreVertical } from 'lucide-react';
-import { Reorder } from 'framer-motion';
+import { useState } from "react";
+import { useTodoStore, type Todo } from "../store/todoStore";
+import {
+  Search,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  CheckSquare,
+  Square,
+  Play,
+} from "lucide-react";
+import { Reorder } from "framer-motion";
+import TodoCard from "../components/todos/TodoCard";
+import TodoForm from "../components/todos/TodoForm";
+import Modal from "../components/ui/Modal";
 
 export default function Backlog() {
-  const { todos, addTodo, updateTodo } = useTodoStore();
-  const [search, setSearch] = useState('');
-  const [newTodoTitle, setNewTodoTitle] = useState('');
+  const {
+    todos,
+    selectedTodos,
+    loading,
+    selectTodo,
+    unselectTodo,
+    moveSelectedToKanban,
+  } = useTodoStore();
 
-  // We filter locally but for reordering to work properly with global store it's tricky.
-  // For this starter, we'll just show the Backlog items.
-  const backlogTodos = todos.filter(t => t.status === 'BACKLOG');
-  
+  const [search, setSearch] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false);
+  const [isSelectedCollapsed, setIsSelectedCollapsed] = useState(false);
+
+  // Filter backlog items
+  const backlogTodos = todos.filter((t) => t.status === "BACKLOG");
+
   // Sophisticated search: check title, label, description
-  const filteredTodos = backlogTodos.filter(t => 
-    t.title.toLowerCase().includes(search.toLowerCase()) || 
-    t.label?.toLowerCase().includes(search.toLowerCase()) ||
-    t.description?.toLowerCase().includes(search.toLowerCase())
+  const filteredTodos = backlogTodos.filter(
+    (t) =>
+      t.title.toLowerCase().includes(search.toLowerCase()) ||
+      (t.label && t.label.toLowerCase().includes(search.toLowerCase())) ||
+      (t.description &&
+        t.description.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTodoTitle.trim()) return;
-    addTodo({ title: newTodoTitle, status: 'BACKLOG', order: Date.now() });
-    setNewTodoTitle('');
+  const handleTodoSelect = (todo: Todo) => {
+    if (selectedTodos.some((t) => t.id === todo.id)) {
+      unselectTodo(todo.id);
+    } else {
+      selectTodo(todo.id);
+    }
   };
 
-  const handleReorder = (_newOrder: Todo[]) => {
-      // Placeholder for reorder logic
+  const handleMoveToKanban = async () => {
+    if (selectedTodos.length > 0) {
+      await moveSelectedToKanban();
+    }
+  };
+
+  const handleEditTodo = (todo: Todo) => {
+    setEditingTodo(todo);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingTodo(null);
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-            Backlog
+          Backlog
         </h1>
-        <span className="text-muted-foreground text-sm">{filteredTodos.length} tasks</span>
+        <div className="flex items-center gap-4">
+          <span className="text-muted-foreground text-sm">
+            {filteredTodos.length} tasks • {selectedTodos.length} selected
+          </span>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+          >
+            <Plus size={20} />
+            New Task
+          </button>
+        </div>
       </div>
 
+      {/* Search bar */}
       <div className="flex gap-4 items-center bg-card p-2 rounded-xl shadow-sm border border-border focus-within:ring-2 focus-within:ring-primary/20 transition-all">
         <Search className="text-muted-foreground ml-2" size={20} />
-        <input 
-            type="text" 
-            placeholder="Search tasks, labels, descriptions..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent border-none outline-none placeholder:text-muted-foreground/50"
+        <input
+          type="text"
+          placeholder="Search tasks, labels, descriptions..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none placeholder:text-muted-foreground/50"
         />
       </div>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <input 
-            type="text" 
-            placeholder="Add a new task..." 
-            value={newTodoTitle}
-            onChange={(e) => setNewTodoTitle(e.target.value)}
-            className="flex-1 p-4 rounded-xl border border-border bg-card shadow-sm outline-none focus:ring-2 focus:ring-primary"
+      {/* Modals */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={handleCloseCreateModal}
+        title="Create New Task"
+        size="lg"
+      >
+        <TodoForm
+          onSubmit={handleCloseCreateModal}
+          onCancel={handleCloseCreateModal}
+          showHeader={false}
         />
-        <button type="submit" className="bg-primary text-primary-foreground px-6 rounded-xl font-bold hover:opacity-90 transition-opacity">
-            <Plus size={24} />
-        </button>
-      </form>
+      </Modal>
 
-      <div className="space-y-2">
-        <Reorder.Group axis="y" values={filteredTodos} onReorder={handleReorder}>
-            {filteredTodos.map((todo) => (
-                <Reorder.Item key={todo.id} value={todo}>
-                    <div className="group flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
-                        <div className="text-muted-foreground hover:text-foreground cursor-grab">
-                            <MoreVertical size={16} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{todo.title}</h3>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                {todo.label && (
-                                    <span className="flex items-center gap-1 bg-secondary/10 text-secondary px-2 py-0.5 rounded-full text-xs font-medium">
-                                        <Tag size={12} /> {todo.label}
-                                    </span>
-                                )}
-                                {todo.description && (
-                                    <span className="truncate max-w-[200px]">{todo.description}</span>
-                                )}
-                                {todo.dueDate && (
-                                     <span className="flex items-center gap-1">
-                                        <Calendar size={12} /> {new Date(todo.dueDate).toLocaleDateString()}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => updateTodo(todo.id, { status: 'TODO' })}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2"
-                        >
-                            Select <ArrowRight size={16} />
-                        </button>
-                    </div>
-                </Reorder.Item>
-            ))}
-        </Reorder.Group>
-        
-        {filteredTodos.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-                <p>No tasks found in backlog. Create one!</p>
-            </div>
+      <Modal
+        isOpen={!!editingTodo}
+        onClose={handleCloseEditModal}
+        title="Edit Task"
+        size="lg"
+      >
+        {editingTodo && (
+          <TodoForm
+            todo={editingTodo}
+            isEditing
+            onSubmit={handleCloseEditModal}
+            onCancel={handleCloseEditModal}
+            showHeader={false}
+          />
         )}
+      </Modal>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Selected Tasks Panel */}
+        <div className="lg:col-span-1">
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <button
+              onClick={() => setIsSelectedCollapsed(!isSelectedCollapsed)}
+              className="w-full px-4 py-3 bg-primary/10 border-b border-border flex items-center justify-between hover:bg-primary/15 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <CheckSquare size={20} className="text-primary" />
+                <h2 className="font-semibold text-foreground">
+                  Selected Tasks
+                </h2>
+                <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs">
+                  {selectedTodos.length}
+                </span>
+              </div>
+              {isSelectedCollapsed ? (
+                <ChevronDown size={20} />
+              ) : (
+                <ChevronUp size={20} />
+              )}
+            </button>
+
+            {!isSelectedCollapsed && (
+              <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                {selectedTodos.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-4">
+                    No tasks selected. Select tasks from the backlog to start
+                    planning your sprint.
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      {selectedTodos.map((todo) => (
+                        <div
+                          key={todo.id}
+                          className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg"
+                        >
+                          <button
+                            onClick={() => unselectTodo(todo.id)}
+                            className="text-primary hover:text-primary/70"
+                          >
+                            <CheckSquare size={16} />
+                          </button>
+                          <span className="flex-1 text-sm font-medium">
+                            {todo.title}
+                          </span>
+                          {todo.label && (
+                            <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
+                              {todo.label}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleMoveToKanban}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+                    >
+                      <Play size={16} />
+                      Start Sprint ({selectedTodos.length} tasks)
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Backlog Tasks */}
+        <div className="lg:col-span-2">
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <button
+              onClick={() => setIsBacklogCollapsed(!isBacklogCollapsed)}
+              className="w-full px-4 py-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Square size={20} className="text-muted-foreground" />
+                <h2 className="font-semibold text-foreground">Backlog Tasks</h2>
+                <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
+                  {filteredTodos.length}
+                </span>
+              </div>
+              {isBacklogCollapsed ? (
+                <ChevronDown size={20} />
+              ) : (
+                <ChevronUp size={20} />
+              )}
+            </button>
+
+            {!isBacklogCollapsed && (
+              <div className="p-4">
+                {loading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading tasks...
+                  </div>
+                ) : filteredTodos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Square size={48} className="mx-auto mb-2 opacity-50" />
+                    <p>No tasks in backlog</p>
+                    <p className="text-sm">
+                      Create your first task to get started
+                    </p>
+                  </div>
+                ) : (
+                  <Reorder.Group
+                    axis="y"
+                    values={filteredTodos}
+                    onReorder={() => {}} // Placeholder for reorder logic
+                    className="space-y-3"
+                  >
+                    {filteredTodos.map((todo) => (
+                      <Reorder.Item key={todo.id} value={todo}>
+                        <TodoCard
+                          todo={todo}
+                          onSelect={handleTodoSelect}
+                          onEdit={handleEditTodo}
+                          isSelected={selectedTodos.some(
+                            (t) => t.id === todo.id
+                          )}
+                        />
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

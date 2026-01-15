@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -21,7 +21,7 @@ export default function Login() {
         password,
       });
       if (error) throw error;
-      navigate('/');
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -29,7 +29,7 @@ export default function Login() {
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'twitter') => {
+  const handleOAuth = async (provider: "google" | "twitter") => {
     setLoading(true);
     setError(null);
     try {
@@ -54,7 +54,7 @@ export default function Login() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Or{' '}
+            Or{" "}
             <Link
               to="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
@@ -69,7 +69,7 @@ export default function Login() {
             <button
               type="button"
               disabled={loading}
-              onClick={() => handleOAuth('google')}
+              onClick={() => handleOAuth("google")}
               className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -95,10 +95,14 @@ export default function Login() {
             <button
               type="button"
               disabled={loading}
-              onClick={() => handleOAuth('twitter')}
+              onClick={() => handleOAuth("twitter")}
               className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218Zm-2.128 2.4739L10.8574 12.0305L5.31378 4.10188H7.70014L12.1742 10.5011L12.8709 11.498L18.6865 19.817H16.3001L11.5543 13.0957Z" />
               </svg>
               X (Twitter)
@@ -170,7 +174,7 @@ export default function Login() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 to="/signup"
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
