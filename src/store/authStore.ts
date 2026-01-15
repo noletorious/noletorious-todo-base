@@ -1,10 +1,17 @@
 import { create } from "zustand";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+
+// Extended user type that includes our app-specific properties
+export interface AppUser extends SupabaseUser {
+  name?: string;
+  isPaid?: boolean;
+  isPremium?: boolean;
+}
 
 interface AuthState {
   session: Session | null;
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   setSession: (session: Session | null) => void;
   initialize: () => Promise<void>;
@@ -16,7 +23,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   setSession: (session) => {
-    set({ session, user: session?.user ?? null, loading: false });
+    // Create extended user with app-specific properties
+    const appUser: AppUser | null = session?.user
+      ? {
+          ...session.user,
+          name:
+            session.user.user_metadata?.name ||
+            session.user.email?.split("@")[0] ||
+            "User",
+          isPaid: session.user.user_metadata?.isPremium || false,
+          isPremium: session.user.user_metadata?.isPremium || false,
+        }
+      : null;
+
+    set({ session, user: appUser, loading: false });
 
     // Trigger todo fetch when authentication changes
     if (session?.user) {

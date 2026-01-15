@@ -229,3 +229,8 @@ This should have all the components of a full-stack app.
 - User login
 
 - Gated features only enabled if logged in and paid
+
+- Gated features:
+  - Sprints
+  - Dashboard
+  - Multiple Projects
