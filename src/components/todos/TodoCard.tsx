@@ -92,9 +92,17 @@ export default function TodoCard({
     const target = e.target as HTMLElement;
     if (target.tagName === "BUTTON" || target.closest("button")) return;
 
-    // Always open edit modal when clicking on a task
-    if (onEdit) {
-      onEdit(todo);
+    // Check for modifier keys to handle selection vs editing
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      // Multi-select mode - call onSelect if available
+      if (onSelect) {
+        onSelect(todo);
+      }
+    } else {
+      // Normal click - open edit modal when clicking on a task
+      if (onEdit) {
+        onEdit(todo);
+      }
     }
   };
 
@@ -117,7 +125,7 @@ export default function TodoCard({
         !disableClick && "cursor-pointer",
         isDragging && "opacity-50 transform rotate-2",
         isSelected && "ring-2 ring-primary ring-opacity-50",
-        className
+        className,
       )}
     >
       {/* Header with title */}
@@ -134,7 +142,7 @@ export default function TodoCard({
                   "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity",
                   isSelected
                     ? "bg-primary text-primary-foreground ring-2 ring-primary/50"
-                    : statusColors[todo.status]
+                    : statusColors[todo.status],
                 )}
               >
                 {isSelected
@@ -217,7 +225,7 @@ export default function TodoCard({
               "flex items-center gap-1 text-xs",
               isOverdue && "text-red-600",
               isDueSoon && "text-yellow-600",
-              !isOverdue && !isDueSoon && "text-muted-foreground"
+              !isOverdue && !isDueSoon && "text-muted-foreground",
             )}
           >
             <Clock size={12} />
@@ -232,7 +240,7 @@ export default function TodoCard({
           <span
             className={cn(
               "px-2 py-1 rounded-full text-xs font-medium border",
-              priorityColors[todo.priority]
+              priorityColors[todo.priority],
             )}
           >
             <AlertCircle className="inline w-3 h-3 mr-1" />
