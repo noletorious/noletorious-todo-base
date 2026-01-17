@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
-import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Link } from "react-router-dom";
+import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 
 export default function SignUp() {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -17,13 +17,13 @@ export default function SignUp() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       setLoading(false);
       return;
     }
@@ -47,21 +47,31 @@ export default function SignUp() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center gap-3 font-bold text-2xl text-gray-900 dark:text-white">
+                <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                  A
+                </div>
+                AgileStart
+              </div>
+            </div>
+
             <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
             <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
               Check your email!
             </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              We've sent you a confirmation link at{' '}
+              We've sent you a confirmation link at{" "}
               <span className="font-medium text-indigo-600 dark:text-indigo-400">
                 {email}
               </span>
             </p>
             <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
-              Click the link in your email to verify your account and start using your agile task manager.
+              Click the link in your email to verify your account and start
+              using your agile task manager.
             </p>
           </div>
-          
+
           <div className="mt-8">
             <Link
               to="/login"
@@ -86,6 +96,16 @@ export default function SignUp() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Sign In
           </Link>
+
+          <div className="flex justify-center mt-6 mb-4">
+            <div className="flex items-center gap-3 font-bold text-2xl text-gray-900 dark:text-white">
+              <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                A
+              </div>
+              AgileStart
+            </div>
+          </div>
+
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Create your account
           </h2>
@@ -97,7 +117,10 @@ export default function SignUp() {
         <form className="space-y-6" onSubmit={handleSignUp}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="email-address"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Email address
               </label>
               <input
@@ -112,9 +135,12 @@ export default function SignUp() {
                 placeholder="Enter your email"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Password
               </label>
               <input
@@ -131,7 +157,10 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="confirm-password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Confirm password
               </label>
               <input
@@ -150,7 +179,9 @@ export default function SignUp() {
 
           {error && (
             <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-              <div className="text-sm text-red-800 dark:text-red-200">{error}</div>
+              <div className="text-sm text-red-800 dark:text-red-200">
+                {error}
+              </div>
             </div>
           )}
 
@@ -167,7 +198,7 @@ export default function SignUp() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 to="/login"
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"

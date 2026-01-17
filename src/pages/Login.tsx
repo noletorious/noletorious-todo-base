@@ -50,6 +50,15 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div>
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center gap-3 font-bold text-2xl text-gray-900 dark:text-white">
+              <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                A
+              </div>
+              AgileStart
+            </div>
+          </div>
+
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Sign in to your account
           </h2>
