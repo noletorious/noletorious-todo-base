@@ -25,6 +25,7 @@ import { GripVertical, Loader2 } from "lucide-react";
 import TodoCard from "../components/todos/TodoCard";
 import TodoForm from "../components/todos/TodoForm";
 import Modal from "../components/ui/Modal";
+import { CompletionModal } from "../components/ui/CompletionModal";
 
 // --- Components ---
 
@@ -53,22 +54,18 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "mb-3 cursor-grab active:cursor-grabbing",
-        isDragging && "opacity-50"
-      )}
+      className={cn("mb-3 group", isDragging && "opacity-50")}
     >
-      <div {...attributes} {...listeners} className="flex items-start gap-2">
-        <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-start gap-2">
+        <div
+          {...attributes}
+          {...listeners}
+          className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+        >
           <GripVertical size={14} className="text-muted-foreground" />
         </div>
         <div className="flex-1">
-          <TodoCard
-            todo={todo}
-            onEdit={onEdit}
-            isDragging={isDragging}
-            className="group"
-          />
+          <TodoCard todo={todo} onEdit={onEdit} isDragging={isDragging} />
         </div>
       </div>
     </div>
@@ -127,6 +124,8 @@ export default function Kanban() {
   const { todos, updateTodo, loading } = useTodoStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -175,7 +174,13 @@ export default function Kanban() {
       }
 
       if (activeTodo && newStatus && activeTodo.status !== newStatus) {
-        updateTodo(activeTodo.id, { status: newStatus });
+        // Special handling for dragging to DONE - show completion modal
+        if (newStatus === "DONE") {
+          setTaskToComplete(activeTodo);
+          setShowCompletionModal(true);
+        } else {
+          updateTodo(activeTodo.id, { status: newStatus });
+        }
       }
     }
 
@@ -192,6 +197,17 @@ export default function Kanban() {
     setEditingTodo(null);
   };
 
+  const handleCompleteTask = async (reason: string) => {
+    if (taskToComplete) {
+      await updateTodo(taskToComplete.id, {
+        status: "DONE",
+        completed: true,
+        completionReason: reason,
+      });
+      setTaskToComplete(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
@@ -203,7 +219,9 @@ export default function Kanban() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col animate-in fade-in duration-500">
       <div className="mb-6">
-        <h1 className="text-3xl font-heading font-bold">Kanban Board</h1>
+        <h1 className="text-3xl font-heading font-bold">
+          My Project - Kanban Board
+        </h1>
         <p className="text-muted-foreground">
           Drag and drop tasks to manage your agile workflow.
         </p>
@@ -254,6 +272,17 @@ export default function Kanban() {
           />
         )}
       </Modal>
+
+      {/* Completion Modal */}
+      <CompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => {
+          setShowCompletionModal(false);
+          setTaskToComplete(null);
+        }}
+        onComplete={handleCompleteTask}
+        taskTitle={taskToComplete?.title || ""}
+      />
     </div>
   );
 }

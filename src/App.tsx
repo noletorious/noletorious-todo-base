@@ -6,6 +6,7 @@ import Kanban from "./pages/Kanban";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import Upgrade from "./pages/Upgrade";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import { useAuthStore } from "./store/authStore";
@@ -29,6 +30,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="backlog" element={<Backlog />} />
               <Route path="kanban" element={<Kanban />} />
+              <Route path="upgrade" element={<Upgrade />} />
             </Route>
           </Route>
 

@@ -71,9 +71,14 @@ export default function Backlog() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-          Backlog
-        </h1>
+        <div>
+          <h1 className="text-3xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+            My Project - Backlog
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Organize and plan your tasks
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-muted-foreground text-sm">
             {filteredTodos.length} tasks • {selectedTodos.length} selected
@@ -131,135 +136,189 @@ export default function Backlog() {
         )}
       </Modal>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Selected Tasks Panel */}
-        <div className="lg:col-span-1">
-          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-            <button
-              onClick={() => setIsSelectedCollapsed(!isSelectedCollapsed)}
-              className="w-full px-4 py-3 bg-primary/10 border-b border-border flex items-center justify-between hover:bg-primary/15 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <CheckSquare size={20} className="text-primary" />
-                <h2 className="font-semibold text-foreground">
-                  Selected Tasks
-                </h2>
-                <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs">
-                  {selectedTodos.length}
-                </span>
-              </div>
-              {isSelectedCollapsed ? (
-                <ChevronDown size={20} />
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <button
+            onClick={() => setIsSelectedCollapsed(!isSelectedCollapsed)}
+            className="w-full px-4 py-3 bg-primary/10 border-b border-border flex items-center justify-between hover:bg-primary/15 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <CheckSquare size={20} className="text-primary" />
+              <h2 className="font-semibold text-foreground">Selected Tasks</h2>
+              <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs">
+                {selectedTodos.length}
+              </span>
+            </div>
+            {isSelectedCollapsed ? (
+              <ChevronDown size={20} />
+            ) : (
+              <ChevronUp size={20} />
+            )}
+          </button>
+
+          {!isSelectedCollapsed && (
+            <div className="p-4 space-y-3">
+              {selectedTodos.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  No tasks selected. Select tasks from the backlog to start
+                  planning your sprint.
+                </p>
               ) : (
-                <ChevronUp size={20} />
-              )}
-            </button>
-
-            {!isSelectedCollapsed && (
-              <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-                {selectedTodos.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-4">
-                    No tasks selected. Select tasks from the backlog to start
-                    planning your sprint.
-                  </p>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      {selectedTodos.map((todo) => (
-                        <div
-                          key={todo.id}
-                          className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg"
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {selectedTodos.map((todo) => (
+                      <div
+                        key={todo.id}
+                        className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border/50"
+                      >
+                        <button
+                          onClick={() => unselectTodo(todo.id)}
+                          className="text-primary hover:text-primary/70"
                         >
-                          <button
-                            onClick={() => unselectTodo(todo.id)}
-                            className="text-primary hover:text-primary/70"
-                          >
-                            <CheckSquare size={16} />
-                          </button>
-                          <span className="flex-1 text-sm font-medium">
-                            {todo.title}
+                          <CheckSquare size={16} />
+                        </button>
+                        <span className="flex-1 text-sm font-medium">
+                          {todo.title}
+                        </span>
+                        {todo.label && (
+                          <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
+                            {todo.label}
                           </span>
-                          {todo.label && (
-                            <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
-                              {todo.label}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
 
-                    <button
-                      onClick={handleMoveToKanban}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+                  <button
+                    onClick={handleMoveToKanban}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+                  >
+                    <Play size={16} />
+                    Start Sprint ({selectedTodos.length} tasks)
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Backlog Tasks */}
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <button
+            onClick={() => setIsBacklogCollapsed(!isBacklogCollapsed)}
+            className="w-full px-4 py-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Square size={20} className="text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Backlog Tasks</h2>
+              <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
+                {filteredTodos.length}
+              </span>
+            </div>
+            {isBacklogCollapsed ? (
+              <ChevronDown size={20} />
+            ) : (
+              <ChevronUp size={20} />
+            )}
+          </button>
+
+          {!isBacklogCollapsed && (
+            <div className="p-4">
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading tasks...
+                </div>
+              ) : filteredTodos.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Square size={48} className="mx-auto mb-2 opacity-50" />
+                  <p>No tasks in backlog</p>
+                  <p className="text-sm">
+                    Create your first task to get started
+                  </p>
+                </div>
+              ) : (
+                <Reorder.Group
+                  axis="y"
+                  values={filteredTodos}
+                  onReorder={() => {}} // Placeholder for reorder logic
+                  className="space-y-3"
+                >
+                  {filteredTodos.map((todo) => (
+                    <Reorder.Item key={todo.id} value={todo}>
+                      <TodoCard
+                        todo={todo}
+                        onSelect={handleTodoSelect}
+                        onEdit={handleEditTodo}
+                        isSelected={selectedTodos.some((t) => t.id === todo.id)}
+                      />
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Done Tasks */}
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="w-full px-4 py-3 bg-green-50 dark:bg-green-950/20 border-b border-border flex items-center gap-2">
+            <CheckSquare size={20} className="text-green-600" />
+            <h2 className="font-semibold text-foreground">Done Tasks</h2>
+            <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded-full text-xs">
+              {todos.filter((t) => t.status === "DONE").length}
+            </span>
+          </div>
+          <div className="p-4">
+            {todos.filter((t) => t.status === "DONE").length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckSquare size={48} className="mx-auto mb-2 opacity-50" />
+                <p>No completed tasks yet</p>
+                <p className="text-sm">Completed tasks will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {todos
+                  .filter((t) => t.status === "DONE")
+                  .map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="p-3 bg-green-50/50 dark:bg-green-950/10 rounded-lg border border-green-200/50 dark:border-green-800/50"
                     >
-                      <Play size={16} />
-                      Start Sprint ({selectedTodos.length} tasks)
-                    </button>
-                  </>
-                )}
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-green-700 dark:text-green-400">
+                          {todo.title}
+                        </span>
+                        {todo.label && (
+                          <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded text-xs">
+                            {todo.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* Backlog Tasks */}
-        <div className="lg:col-span-2">
-          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-            <button
-              onClick={() => setIsBacklogCollapsed(!isBacklogCollapsed)}
-              className="w-full px-4 py-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Square size={20} className="text-muted-foreground" />
-                <h2 className="font-semibold text-foreground">Backlog Tasks</h2>
-                <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
-                  {filteredTodos.length}
-                </span>
-              </div>
-              {isBacklogCollapsed ? (
-                <ChevronDown size={20} />
-              ) : (
-                <ChevronUp size={20} />
-              )}
-            </button>
-
-            {!isBacklogCollapsed && (
-              <div className="p-4">
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Loading tasks...
-                  </div>
-                ) : filteredTodos.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Square size={48} className="mx-auto mb-2 opacity-50" />
-                    <p>No tasks in backlog</p>
-                    <p className="text-sm">
-                      Create your first task to get started
-                    </p>
-                  </div>
-                ) : (
-                  <Reorder.Group
-                    axis="y"
-                    values={filteredTodos}
-                    onReorder={() => {}} // Placeholder for reorder logic
-                    className="space-y-3"
-                  >
-                    {filteredTodos.map((todo) => (
-                      <Reorder.Item key={todo.id} value={todo}>
-                        <TodoCard
-                          todo={todo}
-                          onSelect={handleTodoSelect}
-                          onEdit={handleEditTodo}
-                          isSelected={selectedTodos.some(
-                            (t) => t.id === todo.id
-                          )}
-                        />
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
-                )}
-              </div>
-            )}
+        {/* Archive Tasks */}
+        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+          <div className="w-full px-4 py-3 bg-muted/50 border-b border-border flex items-center gap-2">
+            <Square size={20} className="text-muted-foreground" />
+            <h2 className="font-semibold text-foreground">Archive</h2>
+            <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
+              0
+            </span>
+          </div>
+          <div className="p-4">
+            <div className="text-center py-6 text-muted-foreground">
+              <Square size={48} className="mx-auto mb-2 opacity-50" />
+              <p>No archived tasks</p>
+              <p className="text-sm">
+                Archived tasks will appear here in Settings
+              </p>
+            </div>
           </div>
         </div>
       </div>

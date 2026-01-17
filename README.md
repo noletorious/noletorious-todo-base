@@ -234,3 +234,27 @@ This should have all the components of a full-stack app.
   - Sprints
   - Dashboard
   - Multiple Projects
+
+#### Owner notes on next edits: (01/15/2026)
+
+- The left upgrade to pro button and the dashboard button, when those clicked take them to that initial screen you see when you first log in as a non-premium user. Currently you get a window popup. If you click on the dashboard on the left, you get the Dashboard locked screen. If you click the upgrade, you get the same view with different words, rather then a electric icon, it be a rocket and the title be "Let's go pro". The paragraph below the title, highlight the paid features. I'll provide below but feel free to finesse if you think of something better:
+
+  - Make up to 50 projects
+  - Create and run sprints
+  - Have Dashboard features
+
+- The "i About", let's rethink that link. First let's put that link in the spot where the word "Theme" is next to the theme toggle. Instead of "i About", change it to "🎯Inspiration", every time the user hovers over they get a random short quote of inspiration.
+
+- Where the theme toggle used to be, place the advertisement space there instead. Right above that Inspiration/Toggle section, have the advertisement placed there, basically placed at the bottom of the container it's currently in.
+
+- Let's adjust the layout in the back log. Don't make two columns between Selected Tasks and Backlog Tasks. Instead stack them, we'll need a "Done" section at the bottom, just another row below the actual backlog. Then below that a Archive section where the user would expose that if there are any archive tasks via the "Settings" section in the Dashboard.
+
+- The dashboard is where you see the other gated features and their settings. You can reach other views from here: "Today", "Projects", "Sprints", "Settings".
+
+- In the "Project" settings, the user should be able to have Backlog and Kanban settings. The Kanban setting for instance can be the user can add 3-5 columns. By default it is the 3, "Selected", "In Progress", "Done". The last one is always done. In the 4 column, the column that would be added is "Review". In the 5 column it would add "Validation". All columns can be customised to be whatever text the user wants but they can reset to these defaults.
+
+- The concept of Projects and Sprints are new to the project. A user can have only one sprint active per project at a time to keep it simple. A sprint can be run once or in a candance of 1-3 weeks. A user has to activate, it's off by default. **The Sprints will be a feature we work on later, so table it for now.** For now, set up the app so it has the concept of Projects. The name of the current project should be added to the top, a part of the "Backlog" and "Kanban Board".
+
+- Change "Delete" to "Done", you can never delete a task. When the user "Done"s a task, the user will then need a prelimenary prompt in a modal that asks then how it was done, which in the traditional AGILE is, "Done", "Won't do", "Can't do", "Duplicate", etc. Only when it is done you can delete or archive tasks. Just like any traditional archive, it's not deleting but you can delete an archived task. Deleting a task is a destructive thing, we'll want to alarm the user that it is about to happen if they want to continue.
+
+- Right now the Kanban doesn't work so well. Clicking anywhere on the todo, I end up grabbing the todo, so clicking on the ellipses for instance, doesn't work as intended. I can't seem to place a task in the In Progress colum for some reason. Dragging the Task to the Done column is a event that should Done the task and ask the user how/why it was done.

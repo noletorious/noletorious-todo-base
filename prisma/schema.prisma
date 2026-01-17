@@ -30,9 +30,12 @@ model Todo {
   dueDate     DateTime?
   imageUrl    String?
   order       Float     @default(0) // For drag and drop ranking
+  projectName String    @default("My Project") // Project grouping
 
-  completed Boolean @default(false)
-  selected  Boolean @default(false) // For AGILE backlog selection
+  completed        Boolean @default(false)
+  selected         Boolean @default(false) // For AGILE backlog selection
+  isArchived       Boolean @default(false) // Archive functionality
+  completionReason String? // "Done", "Won't do", "Can't do", "Duplicate"
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

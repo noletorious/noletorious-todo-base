@@ -4,7 +4,7 @@ import {
   Image as ImageIcon,
   MoreVertical,
   Edit,
-  Trash2,
+  CheckSquare as CheckSquareIcon,
   CheckSquare,
   Square,
   Clock,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTodoStore, type Todo } from "../../store/todoStore";
 import { cn } from "../../lib/utils";
+import { CompletionModal } from "../ui/CompletionModal";
 
 interface TodoCardProps {
   todo: Todo;
@@ -49,6 +50,7 @@ export default function TodoCard({
   const { updateTodo, deleteTodo } = useTodoStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   const now = new Date();
   const isOverdue =
@@ -58,15 +60,34 @@ export default function TodoCard({
     new Date(todo.dueDate) > now &&
     new Date(todo.dueDate) <= new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
 
-  const handleComplete = async () => {
-    await updateTodo(todo.id, {
-      completed: !todo.completed,
-      status: todo.completed ? todo.status : "DONE",
-    });
+  const handleComplete = async (reason?: string) => {
+    if (reason) {
+      // Complete with reason from modal
+      await updateTodo(todo.id, {
+        completed: true,
+        status: "DONE",
+        completionReason: reason,
+      });
+    } else {
+      // Toggle completion (for direct click)
+      await updateTodo(todo.id, {
+        completed: !todo.completed,
+        status: todo.completed ? todo.status : "DONE",
+      });
+    }
+  };
+
+  const handleDone = () => {
+    setShowDropdown(false);
+    setShowCompletionModal(true);
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
+    if (
+      window.confirm(
+        "Are you sure you want to permanently delete this task? This action cannot be undone."
+      )
+    ) {
       await deleteTodo(todo.id);
     }
   };
@@ -139,16 +160,27 @@ export default function TodoCard({
                   <Edit size={14} />
                   Edit
                 </button>
-                <button
-                  onClick={() => {
-                    handleDelete();
-                    setShowDropdown(false);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm text-red-600"
-                >
-                  <Trash2 size={14} />
-                  Delete
-                </button>
+                {todo.status !== "DONE" && (
+                  <button
+                    onClick={handleDone}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm text-green-600"
+                  >
+                    <CheckSquareIcon size={14} />
+                    Done
+                  </button>
+                )}
+                {todo.status === "DONE" && (
+                  <button
+                    onClick={() => {
+                      handleDelete();
+                      setShowDropdown(false);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm text-red-600"
+                  >
+                    <CheckSquareIcon size={14} />
+                    Delete
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -251,6 +283,14 @@ export default function TodoCard({
           </a>
         </div>
       )}
+
+      {/* Completion Modal */}
+      <CompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        onComplete={handleComplete}
+        taskTitle={todo.title}
+      />
     </div>
   );
 }

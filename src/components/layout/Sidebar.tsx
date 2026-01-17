@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useTheme } from "../theme-provider";
 import {
@@ -17,11 +17,13 @@ import {
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { InspirationButton } from "../ui/InspirationButton";
 
 export function Sidebar() {
   const { user, signOut } = useAuthStore();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOpen = () => setIsOpen(!isOpen);
@@ -36,7 +38,7 @@ export function Sidebar() {
   };
 
   const upgrade = () => {
-    alert("Upgrade feature coming soon!");
+    navigate("/upgrade");
   };
 
   const downgrade = () => {
@@ -125,27 +127,9 @@ export function Sidebar() {
               >
                 <CreditCard size={18} /> UPGRADE
               </button>
-              {/* About Tooltip simulation */}
-              <div className="group relative flex justify-center">
-                <button className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground">
-                  <Info size={14} /> About
-                </button>
-                <div className="absolute bottom-full mb-2 hidden group-hover:block w-48 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg border border-border z-50">
-                  Our mission is to bring Agile to everyone. Upgrade to unlock
-                  dashboards and multiple projects.
-                </div>
-              </div>
             </div>
           ) : !user.isPaid ? (
             <div className="space-y-4">
-              <div className="p-4 bg-secondary/10 border border-secondary/20 rounded-xl text-center">
-                <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
-                  Advertisement
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Get the best coffee while you work! ☕️
-                </p>
-              </div>
               <button
                 onClick={upgrade}
                 className="w-full flex items-center gap-2 justify-center bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all transform key-upgrade-btn"
@@ -158,14 +142,6 @@ export function Sidebar() {
               >
                 <LogOut size={18} /> Log Out
               </button>
-              <div className="group relative flex justify-center">
-                <button className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground">
-                  <Info size={14} /> About
-                </button>
-                <div className="absolute bottom-full mb-2 hidden group-hover:block w-48 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg border border-border z-50">
-                  Unlock the Dashboard.
-                </div>
-              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -186,53 +162,65 @@ export function Sidebar() {
               >
                 <LogOut size={18} /> Log Out
               </button>
-              <div className="flex justify-center">
-                <button className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground">
-                  <Info size={14} /> About
-                </button>
-              </div>
             </div>
           )}
         </div>
       </div>
 
       {user && (
-        <div className="p-4 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Theme</span>
-          <div className="flex bg-muted rounded-full p-1">
-            <button
-              onClick={() => setTheme("light")}
-              className={cn(
-                "p-1.5 rounded-full transition-all",
-                theme === "light"
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              <Sun size={14} />
-            </button>
-            <button
-              onClick={() => setTheme("system")}
-              className={cn(
-                "p-1.5 rounded-full transition-all",
-                theme === "system"
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              <span className="text-[10px] font-bold">A</span>
-            </button>
-            <button
-              onClick={() => setTheme("dark")}
-              className={cn(
-                "p-1.5 rounded-full transition-all",
-                theme === "dark"
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              <Moon size={14} />
-            </button>
+        <div className="border-t border-border">
+          {/* Advertisement section for non-premium users */}
+          {!user.isPaid && (
+            <div className="p-4 border-b border-border">
+              <div className="p-4 bg-secondary/10 border border-secondary/20 rounded-xl text-center">
+                <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
+                  Advertisement
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Get the best coffee while you work! ☕️
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Inspiration and Theme toggle */}
+          <div className="p-4 flex items-center justify-between">
+            <InspirationButton />
+            <div className="flex bg-muted rounded-full p-1">
+              <button
+                onClick={() => setTheme("light")}
+                className={cn(
+                  "p-1.5 rounded-full transition-all",
+                  theme === "light"
+                    ? "bg-background shadow text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Sun size={14} />
+              </button>
+              <button
+                onClick={() => setTheme("system")}
+                className={cn(
+                  "p-1.5 rounded-full transition-all",
+                  theme === "system"
+                    ? "bg-background shadow text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <span className="text-[10px] font-bold">A</span>
+              </button>
+              <button
+                onClick={() => setTheme("dark")}
+                className={cn(
+                  "p-1.5 rounded-full transition-all",
+                  theme === "dark"
+                    ? "bg-background shadow text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Moon size={14} />
+              </button>
+            </div>
           </div>
         </div>
       )}
