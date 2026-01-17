@@ -22,6 +22,7 @@ export interface Todo {
   selected?: boolean; // For backlog selection (AGILE methodology)
   createdAt?: string;
   updatedAt?: string;
+  completionReason?: string; // How the task was completed
 }
 
 interface TodoState {

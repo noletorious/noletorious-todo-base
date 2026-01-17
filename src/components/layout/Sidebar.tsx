@@ -3,7 +3,6 @@ import { useAuthStore } from "../../store/authStore";
 import { useTheme } from "../theme-provider";
 import {
   CreditCard,
-  Info,
   LogIn,
   LogOut,
   LayoutDashboard,
@@ -57,13 +56,19 @@ export function Sidebar() {
     locked?: boolean;
   }) => {
     const isActive = location.pathname === to;
+    const handleClick = () => {
+      if (locked) {
+        // If dashboard is locked, navigate to upgrade page
+        navigate("/upgrade");
+      } else {
+        setIsOpen(false);
+      }
+    };
+
     return (
       <Link
         to={locked ? "#" : to}
-        onClick={() => {
-          if (locked) alert("Upgrade to access Dashboard!");
-          else setIsOpen(false);
-        }}
+        onClick={handleClick}
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mb-1",
           isActive

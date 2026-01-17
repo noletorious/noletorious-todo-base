@@ -2,11 +2,6 @@ import { useState } from "react";
 import {
   Tag,
   Image as ImageIcon,
-  MoreVertical,
-  Edit,
-  CheckSquare as CheckSquareIcon,
-  CheckSquare,
-  Square,
   Clock,
   AlertCircle,
   ExternalLink,
@@ -18,11 +13,11 @@ import { CompletionModal } from "../ui/CompletionModal";
 interface TodoCardProps {
   todo: Todo;
   className?: string;
-  showActions?: boolean;
-  onSelect?: (todo: Todo) => void;
   onEdit?: (todo: Todo) => void;
+  onSelect?: (todo: Todo) => void;
   isSelected?: boolean;
   isDragging?: boolean;
+  disableClick?: boolean;
 }
 
 const priorityColors = {
@@ -41,14 +36,13 @@ const statusColors = {
 export default function TodoCard({
   todo,
   className,
-  showActions = true,
-  onSelect,
   onEdit,
+  onSelect,
   isSelected = false,
   isDragging = false,
+  disableClick = false,
 }: TodoCardProps) {
-  const { updateTodo, deleteTodo } = useTodoStore();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const { updateTodo } = useTodoStore();
   const [imageError, setImageError] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
@@ -60,13 +54,30 @@ export default function TodoCard({
     new Date(todo.dueDate) > now &&
     new Date(todo.dueDate) <= new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
 
-  const handleComplete = async (reason?: string) => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't handle click if disabled, dragging, or if clicking on a button/interactive element
+    if (disableClick || isDragging) return;
+
+    // Don't trigger if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === "BUTTON" || target.closest("button")) return;
+
+    // If onSelect is provided (backlog mode), handle selection
+    if (onSelect) {
+      onSelect(todo);
+    } else if (onEdit) {
+      onEdit(todo);
+    }
+  };
+
+  const handleComplete = async (reason?: string, description?: string) => {
     if (reason) {
       // Complete with reason from modal
       await updateTodo(todo.id, {
         completed: true,
         status: "DONE",
         completionReason: reason,
+        ...(description && { description: description }),
       });
     } else {
       // Toggle completion (for direct click)
@@ -77,114 +88,24 @@ export default function TodoCard({
     }
   };
 
-  const handleDone = () => {
-    setShowDropdown(false);
-    setShowCompletionModal(true);
-  };
-
-  const handleDelete = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to permanently delete this task? This action cannot be undone."
-      )
-    ) {
-      await deleteTodo(todo.id);
-    }
-  };
-
-  const handleSelect = () => {
-    onSelect?.(todo);
-  };
-
-  const handleEdit = () => {
-    setShowDropdown(false);
-    onEdit?.(todo);
-  };
-
   return (
     <div
+      onClick={handleCardClick}
       className={cn(
         "bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all group",
+        !disableClick && "cursor-pointer",
         isDragging && "opacity-50 transform rotate-2",
         isSelected && "ring-2 ring-primary ring-opacity-50",
         className
       )}
     >
-      {/* Header with title and actions */}
+      {/* Header with title */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-1">
-          {onSelect && (
-            <button
-              onClick={handleSelect}
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
-            </button>
-          )}
-          <button
-            onClick={handleComplete}
-            className={cn(
-              "transition-colors",
-              todo.completed
-                ? "text-green-600"
-                : "text-muted-foreground hover:text-green-600"
-            )}
-          >
-            {todo.completed ? <CheckSquare size={20} /> : <Square size={20} />}
-          </button>
-          <h3
-            className={cn(
-              "font-medium text-foreground flex-1",
-              todo.completed && "line-through text-muted-foreground"
-            )}
-          >
+          <h3 className="font-medium text-foreground text-sm line-clamp-2 flex-1">
             {todo.title}
           </h3>
         </div>
-
-        {showActions && (
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="text-muted-foreground hover:text-foreground p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            {showDropdown && (
-              <div className="absolute right-0 top-8 bg-card border border-border rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
-                <button
-                  onClick={handleEdit}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm"
-                >
-                  <Edit size={14} />
-                  Edit
-                </button>
-                {todo.status !== "DONE" && (
-                  <button
-                    onClick={handleDone}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm text-green-600"
-                  >
-                    <CheckSquareIcon size={14} />
-                    Done
-                  </button>
-                )}
-                {todo.status === "DONE" && (
-                  <button
-                    onClick={() => {
-                      handleDelete();
-                      setShowDropdown(false);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted w-full text-left text-sm text-red-600"
-                  >
-                    <CheckSquareIcon size={14} />
-                    Delete
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Description */}

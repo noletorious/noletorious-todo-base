@@ -1,4 +1,3 @@
-import React from "react";
 import { Rocket, Zap } from "lucide-react";
 
 interface UpgradeScreenProps {

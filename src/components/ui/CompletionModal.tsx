@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { CheckSquare, X } from "lucide-react";
 
 interface CompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onComplete: (reason: string) => void;
+  onComplete: (reason: string, description?: string) => void;
   taskTitle: string;
 }
 
@@ -39,12 +39,14 @@ export function CompletionModal({
   taskTitle,
 }: CompletionModalProps) {
   const [selectedReason, setSelectedReason] = useState("Done");
+  const [description, setDescription] = useState("");
 
   if (!isOpen) return null;
 
   const handleComplete = () => {
-    onComplete(selectedReason);
+    onComplete(selectedReason, description.trim() || undefined);
     onClose();
+    setDescription(""); // Reset for next time
   };
 
   return (
@@ -95,6 +97,19 @@ export function CompletionModal({
               </label>
             ))}
           </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">
+            Optional Description
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add any notes about how this task was completed..."
+            className="w-full px-3 py-2 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            rows={3}
+          />
         </div>
 
         <div className="flex gap-3">

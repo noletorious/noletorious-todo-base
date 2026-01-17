@@ -28,7 +28,7 @@ export default function Backlog() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false);
-  const [isSelectedCollapsed, setIsSelectedCollapsed] = useState(false);
+  const [isSelectedCollapsed, setIsSelectedCollapsed] = useState(true);
 
   // Filter backlog items
   const backlogTodos = todos.filter((t) => t.status === "BACKLOG");

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const inspirationQuotes = [
   "The journey of a thousand miles begins with one step. - Lao Tzu",

@@ -60,12 +60,17 @@ function SortableItem({
         <div
           {...attributes}
           {...listeners}
-          className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+          className="mt-1 opacity-60 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1.5 hover:bg-muted rounded-md touch-none"
         >
-          <GripVertical size={14} className="text-muted-foreground" />
+          <GripVertical size={16} className="text-muted-foreground" />
         </div>
         <div className="flex-1">
-          <TodoCard todo={todo} onEdit={onEdit} isDragging={isDragging} />
+          <TodoCard
+            todo={todo}
+            onEdit={onEdit}
+            isDragging={isDragging}
+            disableClick={isDragging}
+          />
         </div>
       </div>
     </div>
@@ -197,12 +202,13 @@ export default function Kanban() {
     setEditingTodo(null);
   };
 
-  const handleCompleteTask = async (reason: string) => {
+  const handleCompleteTask = async (reason: string, description?: string) => {
     if (taskToComplete) {
       await updateTodo(taskToComplete.id, {
         status: "DONE",
         completed: true,
         completionReason: reason,
+        ...(description && { description: description }),
       });
       setTaskToComplete(null);
     }

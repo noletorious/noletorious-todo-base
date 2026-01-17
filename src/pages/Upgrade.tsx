@@ -1,4 +1,3 @@
-import React from "react";
 import { UpgradeScreen } from "../components/ui/UpgradeScreen";
 
 export default function Upgrade() {
