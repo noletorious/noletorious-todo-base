@@ -46,7 +46,7 @@ export function UpgradeScreen({
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-accent rounded-full"></span>
-                  Have Dashboard features
+                  Dashboard features: advanced analytics & reports
                 </p>
               </div>
             </div>

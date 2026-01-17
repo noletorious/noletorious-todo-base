@@ -7,7 +7,6 @@ import {
   ChevronUp,
   CheckSquare,
   Square,
-  Play,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
 import TodoCard from "../components/todos/TodoCard";
@@ -21,17 +20,16 @@ export default function Backlog() {
     loading,
     selectTodo,
     unselectTodo,
-    moveSelectedToKanban,
+    updateTodo,
   } = useTodoStore();
 
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false);
-  const [isSelectedCollapsed, setIsSelectedCollapsed] = useState(true);
 
-  // Filter backlog items
-  const backlogTodos = todos.filter((t) => t.status === "BACKLOG");
+  // Show all tasks in backlog view regardless of status
+  const backlogTodos = todos;
 
   // Sophisticated search: check title, label, description
   const filteredTodos = backlogTodos.filter(
@@ -50,10 +48,8 @@ export default function Backlog() {
     }
   };
 
-  const handleMoveToKanban = async () => {
-    if (selectedTodos.length > 0) {
-      await moveSelectedToKanban();
-    }
+  const handleStatusChange = async (todo: Todo, newStatus: any) => {
+    await updateTodo(todo.id, { status: newStatus });
   };
 
   const handleEditTodo = (todo: Todo) => {
@@ -137,74 +133,8 @@ export default function Backlog() {
       </Modal>
 
       <div className="space-y-6">
-        {/* Selected Tasks Panel */}
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-          <button
-            onClick={() => setIsSelectedCollapsed(!isSelectedCollapsed)}
-            className="w-full px-4 py-3 bg-primary/10 border-b border-border flex items-center justify-between hover:bg-primary/15 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <CheckSquare size={20} className="text-primary" />
-              <h2 className="font-semibold text-foreground">Selected Tasks</h2>
-              <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs">
-                {selectedTodos.length}
-              </span>
-            </div>
-            {isSelectedCollapsed ? (
-              <ChevronDown size={20} />
-            ) : (
-              <ChevronUp size={20} />
-            )}
-          </button>
-
-          {!isSelectedCollapsed && (
-            <div className="p-4 space-y-3">
-              {selectedTodos.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  No tasks selected. Select tasks from the backlog to start
-                  planning your sprint.
-                </p>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {selectedTodos.map((todo) => (
-                      <div
-                        key={todo.id}
-                        className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-border/50"
-                      >
-                        <button
-                          onClick={() => unselectTodo(todo.id)}
-                          className="text-primary hover:text-primary/70"
-                        >
-                          <CheckSquare size={16} />
-                        </button>
-                        <span className="flex-1 text-sm font-medium">
-                          {todo.title}
-                        </span>
-                        {todo.label && (
-                          <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
-                            {todo.label}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={handleMoveToKanban}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
-                  >
-                    <Play size={16} />
-                    Start Sprint ({selectedTodos.length} tasks)
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Backlog Tasks */}
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        <div className="bg-card rounded-xl shadow-sm border border-border">
           <button
             onClick={() => setIsBacklogCollapsed(!isBacklogCollapsed)}
             className="w-full px-4 py-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
@@ -215,6 +145,11 @@ export default function Backlog() {
               <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
                 {filteredTodos.length}
               </span>
+              {selectedTodos.length > 0 && (
+                <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs">
+                  {selectedTodos.length} selected
+                </span>
+              )}
             </div>
             {isBacklogCollapsed ? (
               <ChevronDown size={20} />
@@ -250,7 +185,9 @@ export default function Backlog() {
                         todo={todo}
                         onSelect={handleTodoSelect}
                         onEdit={handleEditTodo}
+                        onStatusChange={handleStatusChange}
                         isSelected={selectedTodos.some((t) => t.id === todo.id)}
+                        showStatusDropdown={true}
                       />
                     </Reorder.Item>
                   ))}

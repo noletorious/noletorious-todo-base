@@ -140,12 +140,12 @@ export default function Kanban() {
   );
 
   const columns: { id: Status; title: string }[] = [
-    { id: "TODO", title: "Selected" },
+    { id: "SELECTED", title: "Selected" },
     { id: "IN_PROGRESS", title: "In Progress" },
     { id: "DONE", title: "Done" },
   ];
 
-  // Filter items for board
+  // Filter items for board - show SELECTED, IN_PROGRESS, and DONE
   const boardTodos = todos.filter((t) => t.status !== "BACKLOG");
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -204,10 +204,11 @@ export default function Kanban() {
 
   const handleCompleteTask = async (reason: string, description?: string) => {
     if (taskToComplete) {
+      // Complete with reason from modal (reason logged for debugging)
+      console.log("Task completed with reason:", reason);
       await updateTodo(taskToComplete.id, {
         status: "DONE",
         completed: true,
-        completionReason: reason,
         ...(description && { description: description }),
       });
       setTaskToComplete(null);

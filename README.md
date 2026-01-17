@@ -62,6 +62,16 @@ The database policies ensure that:
 
 ## 🚧 Development Progress
 
+### 🎯 Current Focus: Task Feature Refinement
+
+Currently refining and polishing task interaction features across Kanban and Backlog views:
+
+- ✅ **Enhanced Cursor Interactions**: Added pointer cursors and improved click handling
+- ✅ **Fixed Kanban Dragging**: Resolved drag-and-drop conflicts with click handlers
+- ✅ **Completion Modal**: Added optional description field for task completion
+- 🔧 **Task Actions**: Refining "Mark as Done" functionality and modal interactions
+- 🔧 **UI Polish**: Improving task selection, editing, and status management flows
+
 ### ✅ Completed Features
 
 - **📋 Backlog Manager**:
@@ -236,16 +246,6 @@ This should have all the components of a full-stack app.
   - Multiple Projects
 
 #### Owner notes on next edits: (01/15/2026)
-
-- The left upgrade to pro button and the dashboard button, when those clicked take them to that initial screen you see when you first log in as a non-premium user. Currently you get a window popup. If you click on the dashboard on the left, you get the Dashboard locked screen. If you click the upgrade, you get the same view with different words, rather then a electric icon, it be a rocket and the title be "Let's go pro". The paragraph below the title, highlight the paid features. I'll provide below but feel free to finesse if you think of something better:
-
-  - Make up to 50 projects
-  - Create and run sprints
-  - Have Dashboard features
-
-- The "i About", let's rethink that link. First let's put that link in the spot where the word "Theme" is next to the theme toggle. Instead of "i About", change it to "🎯Inspiration", every time the user hovers over they get a random short quote of inspiration.
-
-- Where the theme toggle used to be, place the advertisement space there instead. Right above that Inspiration/Toggle section, have the advertisement placed there, basically placed at the bottom of the container it's currently in.
 
 - Let's adjust the layout in the back log. Don't make two columns between Selected Tasks and Backlog Tasks. Instead stack them, we'll need a "Done" section at the bottom, just another row below the actual backlog. Then below that a Archive section where the user would expose that if there are any archive tasks via the "Settings" section in the Dashboard.
 

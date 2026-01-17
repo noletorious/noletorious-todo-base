@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-export type Status = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE";
+export type Status = "BACKLOG" | "SELECTED" | "IN_PROGRESS" | "DONE";
 export type Priority = "LOW" | "MEDIUM" | "HIGH";
 
 export interface Todo {
