@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 interface ModalProps {
@@ -10,6 +10,11 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
+  statusToggle?: {
+    isDone: boolean;
+    onToggle: () => void;
+    disabled?: boolean;
+  };
 }
 
 const sizeClasses = {
@@ -26,9 +31,11 @@ export default function Modal({
   children,
   className,
   size = "md",
+  statusToggle,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   // Handle focus management
   useEffect(() => {
@@ -69,7 +76,7 @@ export default function Modal({
       if (!modal) return;
 
       const focusableElements = modal.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       const firstElement = focusableElements[0] as HTMLElement;
       const lastElement = focusableElements[
@@ -92,6 +99,22 @@ export default function Modal({
     document.addEventListener("keydown", handleTabKey);
     return () => document.removeEventListener("keydown", handleTabKey);
   }, [isOpen]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showStatusDropdown &&
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showStatusDropdown]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -128,7 +151,7 @@ export default function Modal({
           "relative w-full mx-4 bg-card border border-border rounded-xl shadow-2xl max-h-[90vh] overflow-hidden",
           "animate-in fade-in-0 zoom-in-95 duration-200",
           sizeClasses[size],
-          className
+          className,
         )}
       >
         {/* Header */}
@@ -139,13 +162,57 @@ export default function Modal({
           >
             {title}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            aria-label="Close modal"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {statusToggle && !statusToggle.isDone && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  disabled={statusToggle.disabled}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1",
+                    "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  )}
+                >
+                  Open
+                  <ChevronDown size={12} />
+                </button>
+
+                {showStatusDropdown && (
+                  <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 z-50 min-w-[80px]">
+                    <button
+                      onClick={() => {
+                        statusToggle.onToggle();
+                        setShowStatusDropdown(false);
+                      }}
+                      className="w-full px-3 py-2 hover:bg-muted text-left text-xs text-green-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {statusToggle && statusToggle.isDone && (
+              <button
+                onClick={statusToggle.onToggle}
+                disabled={statusToggle.disabled}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+                  "bg-green-100 text-green-700 hover:bg-green-200",
+                )}
+                title="Mark as Open"
+              >
+                Done
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -154,6 +221,6 @@ export default function Modal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

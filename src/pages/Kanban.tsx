@@ -21,9 +21,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTodoStore, type Todo, type Status } from "../store/todoStore";
 import { cn } from "../lib/utils";
-import { GripVertical, Loader2 } from "lucide-react";
+import { GripVertical, Loader2, Trash2 } from "lucide-react";
 import TodoCard from "../components/todos/TodoCard";
 import TodoForm from "../components/todos/TodoForm";
+import TodoView from "../components/todos/TodoView";
 import Modal from "../components/ui/Modal";
 import { CompletionModal } from "../components/ui/CompletionModal";
 
@@ -32,9 +33,13 @@ import { CompletionModal } from "../components/ui/CompletionModal";
 function SortableItem({
   todo,
   onEdit,
+  onViewOnly,
+  onStatusChange,
 }: {
   todo: Todo;
   onEdit: (todo: Todo) => void;
+  onViewOnly: (todo: Todo) => void;
+  onStatusChange: (todo: Todo, status: Status) => void;
 }) {
   const {
     attributes,
@@ -43,7 +48,13 @@ function SortableItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: todo.id, data: { todo } });
+  } = useSortable({
+    id: todo.id,
+    data: {
+      type: "todo",
+      todo,
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -68,8 +79,11 @@ function SortableItem({
           <TodoCard
             todo={todo}
             onEdit={onEdit}
+            onViewOnly={onViewOnly}
+            onStatusChange={onStatusChange}
             isDragging={isDragging}
             disableClick={isDragging}
+            showStatusDropdown={true}
           />
         </div>
       </div>
@@ -82,27 +96,82 @@ function Column({
   title,
   items,
   onEditTodo,
+  onViewTodo,
+  onClearDone,
+  onStatusChange,
 }: {
   id: Status;
   title: string;
   items: Todo[];
   onEditTodo: (todo: Todo) => void;
+  onViewTodo: (todo: Todo) => void;
+  onClearDone?: () => void;
+  onStatusChange: (todo: Todo, status: Status) => void;
 }) {
-  const { setNodeRef } = useDroppable({ id });
+  const { setNodeRef, isOver } = useDroppable({
+    id,
+    data: {
+      type: "column",
+      columnId: id,
+    },
+  });
+
+  // Calculate date range for Done column
+  const getCompletionDateRange = () => {
+    if (id !== "DONE" || items.length === 0) return null;
+
+    const completedDates = items
+      .filter((todo) => todo.completedAt)
+      .map((todo) => new Date(todo.completedAt!))
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (completedDates.length === 0) return null;
+
+    const earliest = completedDates[0];
+    const latest = completedDates[completedDates.length - 1];
+
+    if (completedDates.length === 1) {
+      return earliest.toLocaleDateString();
+    } else {
+      return `${earliest.toLocaleDateString()} - ${latest.toLocaleDateString()}`;
+    }
+  };
+
+  const dateRange = getCompletionDateRange();
 
   return (
     <div
       ref={setNodeRef}
-      className="flex-1 min-w-[300px] bg-muted/50 rounded-xl p-4 flex flex-col h-full border border-border/50"
+      className={cn(
+        "flex-1 min-w-[300px] bg-muted/50 rounded-xl p-4 flex flex-col h-full border border-border/50 transition-colors",
+        isOver && "bg-primary/10 border-primary/50",
+      )}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="font-heading font-bold text-muted-foreground uppercase tracking-wider text-xs">
           {title}
         </h3>
-        <span className="bg-background text-xs font-bold px-2 py-1 rounded text-muted-foreground shadow-sm">
-          {items.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="bg-background text-xs font-bold px-2 py-1 rounded text-muted-foreground shadow-sm">
+            {items.length}
+          </span>
+          {id === "DONE" && items.length > 0 && onClearDone && (
+            <button
+              onClick={onClearDone}
+              className="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded text-xs font-medium flex items-center gap-1 transition-colors"
+              title="Clear all completed tasks"
+            >
+              <Trash2 size={12} />
+              Clear
+            </button>
+          )}
+        </div>
       </div>
+      {id === "DONE" && dateRange && (
+        <div className="text-xs text-muted-foreground mb-2 text-right italic">
+          {dateRange}
+        </div>
+      )}
 
       <SortableContext
         items={items.map((t) => t.id)}
@@ -110,7 +179,13 @@ function Column({
       >
         <div className="flex-1 overflow-y-auto min-h-[100px]">
           {items.map((todo) => (
-            <SortableItem key={todo.id} todo={todo} onEdit={onEditTodo} />
+            <SortableItem
+              key={todo.id}
+              todo={todo}
+              onEdit={onEditTodo}
+              onViewOnly={onViewTodo}
+              onStatusChange={onStatusChange}
+            />
           ))}
           {items.length === 0 && (
             <div className="h-24 border-2 border-dashed border-border/50 rounded-xl flex items-center justify-center text-xs text-muted-foreground/50">
@@ -126,9 +201,10 @@ function Column({
 // --- Main Page ---
 
 export default function Kanban() {
-  const { todos, updateTodo, loading } = useTodoStore();
+  const { todos, updateTodo, deleteTodo, loading } = useTodoStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null);
 
@@ -136,7 +212,7 @@ export default function Kanban() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const columns: { id: Status; title: string }[] = [
@@ -198,8 +274,28 @@ export default function Kanban() {
     setEditingTodo(todo);
   };
 
+  const handleViewTodo = (todo: Todo) => {
+    setViewingTodo(todo);
+  };
+
   const handleCloseEditModal = () => {
     setEditingTodo(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingTodo(null);
+  };
+
+  const handleStatusChange = (todo: Todo, newStatus: Status) => {
+    // If marking as done, trigger completion modal
+    if (newStatus === "DONE") {
+      setTaskToComplete(todo);
+      setShowCompletionModal(true);
+      return;
+    }
+
+    // Handle other status changes directly
+    updateTodo(todo.id, { status: newStatus });
   };
 
   const handleCompleteTask = async (reason: string, description?: string) => {
@@ -212,6 +308,25 @@ export default function Kanban() {
         ...(description && { description: description }),
       });
       setTaskToComplete(null);
+      // Close edit modal if open
+      setEditingTodo(null);
+    }
+  };
+
+  const handleClearDone = async () => {
+    if (
+      !window.confirm(
+        "Clear all completed tasks from Kanban view? (Tasks will remain in Backlog Done section)",
+      )
+    ) {
+      return;
+    }
+
+    const doneTasks = boardTodos.filter((todo) => todo.status === "DONE");
+
+    // Move done tasks back to BACKLOG to clear them from Kanban while preserving them
+    for (const task of doneTasks) {
+      await updateTodo(task.id, { status: "BACKLOG" });
     }
   };
 
@@ -249,6 +364,9 @@ export default function Kanban() {
               title={col.title}
               items={boardTodos.filter((t) => t.status === col.id)}
               onEditTodo={handleEditTodo}
+              onViewTodo={handleViewTodo}
+              onStatusChange={handleStatusChange}
+              onClearDone={col.id === "DONE" ? handleClearDone : undefined}
             />
           ))}
         </div>
@@ -268,6 +386,25 @@ export default function Kanban() {
         onClose={handleCloseEditModal}
         title="Edit Task"
         size="lg"
+        statusToggle={
+          editingTodo
+            ? {
+                isDone: editingTodo.status === "DONE",
+                onToggle: () => {
+                  if (editingTodo.status === "DONE") {
+                    updateTodo(editingTodo.id, {
+                      status: "BACKLOG",
+                      completed: false,
+                    });
+                  } else {
+                    setTaskToComplete(editingTodo);
+                    setShowCompletionModal(true);
+                  }
+                },
+                disabled: false,
+              }
+            : undefined
+        }
       >
         {editingTodo && (
           <TodoForm
@@ -278,6 +415,28 @@ export default function Kanban() {
             showHeader={false}
           />
         )}
+      </Modal>
+
+      {/* View-Only Modal */}
+      <Modal
+        isOpen={!!viewingTodo}
+        onClose={handleCloseViewModal}
+        title="Task Details"
+        size="lg"
+        statusToggle={
+          viewingTodo && viewingTodo.status === "DONE"
+            ? {
+                isDone: true,
+                onToggle: () => {
+                  // Only allow undoing from backlog, so close modal
+                  handleCloseViewModal();
+                },
+                disabled: true,
+              }
+            : undefined
+        }
+      >
+        {viewingTodo && <TodoView todo={viewingTodo} />}
       </Modal>
 
       {/* Completion Modal */}

@@ -40,6 +40,7 @@ export default function TodoCard({
   todo,
   className,
   onEdit,
+  onViewOnly,
   onSelect,
   onStatusChange,
   isSelected = false,
@@ -64,10 +65,16 @@ export default function TodoCard({
       label: "In Progress",
       color: "bg-yellow-100 text-yellow-800",
     },
-    { value: "DONE", label: "Done", color: "bg-green-100 text-green-800" },
   ];
 
   const handleStatusChange = async (newStatus: Status) => {
+    // If marking as done, show completion modal instead of direct update
+    if (newStatus === "DONE") {
+      setShowCompletionModal(true);
+      setShowStatusMenu(false);
+      return;
+    }
+
     if (onStatusChange) {
       onStatusChange(todo, newStatus);
     } else {
@@ -99,8 +106,10 @@ export default function TodoCard({
         onSelect(todo);
       }
     } else {
-      // Normal click - open edit modal when clicking on a task
-      if (onEdit) {
+      // Normal click - open appropriate modal based on task status
+      if (todo.status === "DONE" && onViewOnly) {
+        onViewOnly(todo);
+      } else if (onEdit) {
         onEdit(todo);
       }
     }
@@ -112,6 +121,8 @@ export default function TodoCard({
     await updateTodo(todo.id, {
       completed: true,
       status: "DONE",
+      completedAt: new Date().toISOString(),
+      completionReason: reason,
       ...(description && { description: description }),
     });
     setShowCompletionModal(false);
@@ -128,64 +139,74 @@ export default function TodoCard({
         className,
       )}
     >
-      {/* Header with title */}
+      {/* Header with title and inline tags */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2 flex-1">
-          {showStatusDropdown && (
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowStatusMenu(!showStatusMenu);
-                }}
-                className={cn(
-                  "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity",
-                  isSelected
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary/50"
-                    : statusColors[todo.status],
-                )}
-              >
-                {isSelected
-                  ? "Selected"
-                  : todo.status
-                      .replace("IN_PROGRESS", "In Progress")
-                      .replace("_", " ")}
-                <ChevronDown size={12} />
-              </button>
-
-              {showStatusMenu && (
-                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 z-20 min-w-[120px]">
-                  {statusOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleStatusChange(option.value as Status);
-                      }}
-                      className="w-full px-3 py-2 hover:bg-muted text-left text-sm flex items-center gap-2"
-                    >
-                      <span
-                        className={cn("w-2 h-2 rounded-full", option.color)}
-                      />
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <h3 className="font-medium text-foreground text-sm line-clamp-2 flex-1">
+        <div className="flex items-center gap-2 flex-1 flex-wrap">
+          <h3 className="font-medium text-foreground text-sm line-clamp-2 flex-1 min-w-0">
             {todo.title}
           </h3>
+
+          {/* Label */}
+          {todo.label && (
+            <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 flex-shrink-0">
+              <Tag className="inline w-3 h-3 mr-1" />
+              {todo.label}
+            </span>
+          )}
+
+          {/* Priority */}
+          {todo.priority && (
+            <span
+              className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0",
+                priorityColors[todo.priority],
+              )}
+            >
+              <AlertCircle className="inline w-3 h-3 mr-1" />
+              {todo.priority}
+            </span>
+          )}
         </div>
 
-        {/* Right-aligned label */}
-        {todo.label && (
-          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 ml-2">
-            <Tag className="inline w-3 h-3 mr-1" />
-            {todo.label}
-          </span>
+        {/* Status dropdown on the right */}
+        {showStatusDropdown && (
+          <div className="relative flex-shrink-0 ml-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowStatusMenu(!showStatusMenu);
+              }}
+              className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity",
+                statusColors[todo.status],
+              )}
+            >
+              {todo.status
+                .replace("IN_PROGRESS", "In Progress")
+                .replace("_", " ")}
+              <ChevronDown size={12} />
+            </button>
+
+            {showStatusMenu && (
+              <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 z-20 min-w-[120px]">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(option.value as Status);
+                    }}
+                    className="w-full px-3 py-2 hover:bg-muted text-left text-sm flex items-center gap-2"
+                  >
+                    <span
+                      className={cn("w-2 h-2 rounded-full", option.color)}
+                    />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -218,6 +239,13 @@ export default function TodoCard({
           </span>
         )}
 
+        {/* Last updated */}
+        {todo.updatedAt && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            Updated {new Date(todo.updatedAt).toLocaleDateString()}
+          </span>
+        )}
+
         {/* Due date */}
         {todo.dueDate && (
           <span
@@ -232,19 +260,6 @@ export default function TodoCard({
             Due {new Date(todo.dueDate).toLocaleDateString()}
             {isOverdue && " (Overdue)"}
             {isDueSoon && " (Due Soon)"}
-          </span>
-        )}
-
-        {/* Priority */}
-        {todo.priority && (
-          <span
-            className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium border",
-              priorityColors[todo.priority],
-            )}
-          >
-            <AlertCircle className="inline w-3 h-3 mr-1" />
-            {todo.priority}
           </span>
         )}
       </div>

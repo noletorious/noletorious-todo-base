@@ -24,13 +24,13 @@ interface TodoFormProps {
   isEditing?: boolean;
   showHeader?: boolean;
   className?: string;
+  onStatusToggle?: (isDone: boolean) => void;
 }
 
 const statusOptions: { value: Status; label: string; color: string }[] = [
   { value: "BACKLOG", label: "Backlog", color: "bg-gray-500" },
   { value: "SELECTED", label: "Selected", color: "bg-blue-500" },
   { value: "IN_PROGRESS", label: "In Progress", color: "bg-yellow-500" },
-  { value: "DONE", label: "Done", color: "bg-green-500" },
 ];
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
@@ -56,6 +56,7 @@ export default function TodoForm({
   isEditing = false,
   showHeader = true,
   className,
+  onStatusToggle,
 }: TodoFormProps) {
   const { addTodo, updateTodo } = useTodoStore();
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,14 @@ export default function TodoForm({
       console.error("Error saving todo:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusToggle = () => {
+    const newStatus = formData.status === "DONE" ? "BACKLOG" : "DONE";
+    setFormData({ ...formData, status: newStatus });
+    if (onStatusToggle) {
+      onStatusToggle(newStatus === "DONE");
     }
   };
 
@@ -303,26 +312,6 @@ export default function TodoForm({
           )}
           {isEditing ? "Update Task" : "Create Task"}
         </button>
-
-        {isEditing && formData.status !== "DONE" && (
-          <button
-            type="button"
-            onClick={() => {
-              setFormData({ ...formData, status: "DONE" });
-              // Auto-submit the form with DONE status
-              setTimeout(() => {
-                const submitBtn = document.querySelector(
-                  'button[type="submit"]'
-                ) as HTMLButtonElement;
-                submitBtn?.click();
-              }, 100);
-            }}
-            disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
-          >
-            ✓ Mark Done
-          </button>
-        )}
 
         {onCancel && (
           <button

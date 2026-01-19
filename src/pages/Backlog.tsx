@@ -7,11 +7,14 @@ import {
   ChevronUp,
   CheckSquare,
   Square,
+  Trash2,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
 import TodoCard from "../components/todos/TodoCard";
 import TodoForm from "../components/todos/TodoForm";
+import TodoView from "../components/todos/TodoView";
 import Modal from "../components/ui/Modal";
+import { CompletionModal } from "../components/ui/CompletionModal";
 
 export default function Backlog() {
   const {
@@ -21,15 +24,20 @@ export default function Backlog() {
     selectTodo,
     unselectTodo,
     updateTodo,
+    deleteTodo,
   } = useTodoStore();
 
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
   const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false);
+  const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null);
 
-  // Show all tasks in backlog view regardless of status
-  const backlogTodos = todos;
+  // Show only non-done tasks in backlog view
+  const backlogTodos = todos.filter((todo) => todo.status !== "DONE");
 
   // Sophisticated search: check title, label, description
   const filteredTodos = backlogTodos.filter(
@@ -37,7 +45,7 @@ export default function Backlog() {
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       (t.label && t.label.toLowerCase().includes(search.toLowerCase())) ||
       (t.description &&
-        t.description.toLowerCase().includes(search.toLowerCase()))
+        t.description.toLowerCase().includes(search.toLowerCase())),
   );
 
   const handleTodoSelect = (todo: Todo) => {
@@ -48,12 +56,55 @@ export default function Backlog() {
     }
   };
 
+  const handleUndoneTask = async (todo: Todo) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to mark "${todo.title}" as not done? This will move it back to your backlog.`,
+      )
+    ) {
+      return;
+    }
+
+    // Move task back to backlog status
+    await updateTodo(todo.id, {
+      status: "BACKLOG",
+      completed: false,
+    });
+  };
+
+  const handleDeleteTask = async (todo: Todo) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete "${todo.title}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    await deleteTodo(todo.id);
+  };
+
   const handleStatusChange = async (todo: Todo, newStatus: any) => {
-    await updateTodo(todo.id, { status: newStatus });
+    // If marking as done, trigger completion modal
+    if (newStatus === "DONE") {
+      setTaskToComplete(todo);
+      setShowCompletionModal(true);
+      return;
+    }
+
+    const updates: Partial<Todo> = {
+      status: newStatus,
+    };
+
+    await updateTodo(todo.id, updates);
   };
 
   const handleEditTodo = (todo: Todo) => {
     setEditingTodo(todo);
+  };
+
+  const handleViewTodo = (todo: Todo) => {
+    setViewingTodo(todo);
   };
 
   const handleCloseCreateModal = () => {
@@ -62,6 +113,24 @@ export default function Backlog() {
 
   const handleCloseEditModal = () => {
     setEditingTodo(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingTodo(null);
+  };
+
+  const handleCompleteTask = async (reason: string, description?: string) => {
+    if (taskToComplete) {
+      console.log("Task completed with reason:", reason);
+      await updateTodo(taskToComplete.id, {
+        status: "DONE",
+        completed: true,
+        ...(description && { description: description }),
+      });
+      setTaskToComplete(null);
+      // Close edit modal if open
+      setEditingTodo(null);
+    }
   };
 
   return (
@@ -120,6 +189,22 @@ export default function Backlog() {
         onClose={handleCloseEditModal}
         title="Edit Task"
         size="lg"
+        statusToggle={
+          editingTodo
+            ? {
+                isDone: editingTodo.status === "DONE",
+                onToggle: () => {
+                  if (editingTodo.status === "DONE") {
+                    handleUndoneTask(editingTodo);
+                  } else {
+                    setTaskToComplete(editingTodo);
+                    setShowCompletionModal(true);
+                  }
+                },
+                disabled: false,
+              }
+            : undefined
+        }
       >
         {editingTodo && (
           <TodoForm
@@ -130,6 +215,29 @@ export default function Backlog() {
             showHeader={false}
           />
         )}
+      </Modal>
+
+      {/* View-Only Modal */}
+      <Modal
+        isOpen={!!viewingTodo}
+        onClose={handleCloseViewModal}
+        title="Task Details"
+        size="lg"
+        statusToggle={
+          viewingTodo && viewingTodo.status === "DONE"
+            ? {
+                isDone: true,
+                onToggle: () => {
+                  // Allow undoing from backlog view
+                  handleUndoneTask(viewingTodo);
+                  handleCloseViewModal();
+                },
+                disabled: false,
+              }
+            : undefined
+        }
+      >
+        {viewingTodo && <TodoView todo={viewingTodo} />}
       </Modal>
 
       <div className="space-y-6">
@@ -143,11 +251,23 @@ export default function Backlog() {
               <Square size={20} className="text-muted-foreground" />
               <h2 className="font-semibold text-foreground">Backlog Tasks</h2>
               <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
-                {filteredTodos.length}
+                {filteredTodos.length} total
               </span>
-              {selectedTodos.length > 0 && (
-                <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs">
-                  {selectedTodos.length} selected
+              {filteredTodos.filter((t) => t.status === "SELECTED").length >
+                0 && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                  {filteredTodos.filter((t) => t.status === "SELECTED").length}{" "}
+                  Selected
+                </span>
+              )}
+              {filteredTodos.filter((t) => t.status === "IN_PROGRESS").length >
+                0 && (
+                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                  {
+                    filteredTodos.filter((t) => t.status === "IN_PROGRESS")
+                      .length
+                  }{" "}
+                  In Progress
                 </span>
               )}
             </div>
@@ -185,6 +305,7 @@ export default function Backlog() {
                         todo={todo}
                         onSelect={handleTodoSelect}
                         onEdit={handleEditTodo}
+                        onViewOnly={handleViewTodo}
                         onStatusChange={handleStatusChange}
                         isSelected={selectedTodos.some((t) => t.id === todo.id)}
                         showStatusDropdown={true}
@@ -199,66 +320,97 @@ export default function Backlog() {
 
         {/* Done Tasks */}
         <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-          <div className="w-full px-4 py-3 bg-green-50 dark:bg-green-950/20 border-b border-border flex items-center gap-2">
-            <CheckSquare size={20} className="text-green-600" />
-            <h2 className="font-semibold text-foreground">Done Tasks</h2>
-            <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded-full text-xs">
-              {todos.filter((t) => t.status === "DONE").length}
-            </span>
-          </div>
-          <div className="p-4">
-            {todos.filter((t) => t.status === "DONE").length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckSquare size={48} className="mx-auto mb-2 opacity-50" />
-                <p>No completed tasks yet</p>
-                <p className="text-sm">Completed tasks will appear here</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {todos
-                  .filter((t) => t.status === "DONE")
-                  .map((todo) => (
-                    <div
-                      key={todo.id}
-                      className="p-3 bg-green-50/50 dark:bg-green-950/10 rounded-lg border border-green-200/50 dark:border-green-800/50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-green-700 dark:text-green-400">
-                          {todo.title}
-                        </span>
-                        {todo.label && (
-                          <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded text-xs">
-                            {todo.label}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Archive Tasks */}
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-          <div className="w-full px-4 py-3 bg-muted/50 border-b border-border flex items-center gap-2">
-            <Square size={20} className="text-muted-foreground" />
-            <h2 className="font-semibold text-foreground">Archive</h2>
-            <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
-              0
-            </span>
-          </div>
-          <div className="p-4">
-            <div className="text-center py-6 text-muted-foreground">
-              <Square size={48} className="mx-auto mb-2 opacity-50" />
-              <p>No archived tasks</p>
-              <p className="text-sm">
-                Archived tasks will appear here in Settings
-              </p>
+          <button
+            onClick={() => setIsDoneCollapsed(!isDoneCollapsed)}
+            className="w-full px-4 py-3 bg-green-50 dark:bg-green-950/20 border-b border-border flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-950/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <CheckSquare size={20} className="text-green-600" />
+              <h2 className="font-semibold text-foreground">Done Tasks</h2>
+              <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded-full text-xs">
+                {todos.filter((t) => t.status === "DONE").length}
+              </span>
             </div>
-          </div>
+            {isDoneCollapsed ? (
+              <ChevronDown size={20} className="text-green-600" />
+            ) : (
+              <ChevronUp size={20} className="text-green-600" />
+            )}
+          </button>
+          {!isDoneCollapsed && (
+            <div className="p-4">
+              {todos.filter((t) => t.status === "DONE").length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <CheckSquare size={48} className="mx-auto mb-2 opacity-50" />
+                  <p>No completed tasks yet</p>
+                  <p className="text-sm">Completed tasks will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {todos
+                    .filter((t) => t.status === "DONE")
+                    .map((todo) => (
+                      <div
+                        key={todo.id}
+                        className="group p-3 bg-green-50/50 dark:bg-green-950/10 rounded-lg border border-green-200/50 dark:border-green-800/50 hover:bg-green-100/50 dark:hover:bg-green-950/20 transition-colors cursor-pointer"
+                        onClick={() => handleViewTodo(todo)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-green-700 dark:text-green-400">
+                                {todo.title}
+                              </span>
+                              {todo.label && (
+                                <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded text-xs">
+                                  {todo.label}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 ml-2 transition-all duration-200">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUndoneTask(todo);
+                              }}
+                              className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded text-xs transition-colors"
+                              title="Mark as not done"
+                            >
+                              Undone
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTask(todo);
+                              }}
+                              className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded text-xs transition-colors flex items-center gap-1"
+                              title="Delete forever"
+                            >
+                              <Trash2 size={10} />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Completion Modal */}
+      <CompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => {
+          setShowCompletionModal(false);
+          setTaskToComplete(null);
+        }}
+        onComplete={handleCompleteTask}
+        taskTitle={taskToComplete?.title || ""}
+      />
     </div>
   );
 }

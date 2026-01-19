@@ -12,17 +12,22 @@ export interface Todo {
   title: string;
   description?: string;
   status: Status;
-  label?: string;
+  label?: string; // Maps to database 'label' field
   priority?: Priority;
   dueDate?: string; // ISO string
   imageUrl?: string;
   order: number;
+  projectName?: string;
   completed?: boolean;
   userId?: string;
   selected?: boolean; // For backlog selection (AGILE methodology)
+  isArchived?: boolean;
+  completionReason?: string;
   createdAt?: string;
   updatedAt?: string;
-  completionReason?: string; // How the task was completed
+  // Client-side only fields (not in database)
+  lastOpenedAt?: string; // When task was last opened/viewed
+  completedAt?: string; // When task was marked as done
 }
 
 interface TodoState {
@@ -46,7 +51,7 @@ interface TodoState {
 
   // Bulk operations
   bulkUpdateOrder: (
-    updates: { id: string; order: number; status?: Status }[]
+    updates: { id: string; order: number; status?: Status }[],
   ) => Promise<void>;
 
   // Initialization and cleanup
@@ -67,7 +72,7 @@ export const useTodoStore = create<TodoState>()(
       fetchTodos: async () => {
         console.log(
           "🚀 fetchTodos called - current loading state:",
-          get().loading
+          get().loading,
         );
 
         // Prevent multiple simultaneous fetches
@@ -115,7 +120,7 @@ export const useTodoStore = create<TodoState>()(
           console.log(
             "✅ Database query successful! Found",
             data?.length || 0,
-            "todos"
+            "todos",
           );
           console.log("📋 Todos data:", data);
 
@@ -213,7 +218,7 @@ export const useTodoStore = create<TodoState>()(
           // 3. Replace temp todo with real one
           set((state) => ({
             todos: state.todos.map((t) =>
-              t.id === tempId ? (data as Todo) : t
+              t.id === tempId ? (data as Todo) : t,
             ),
           }));
         } catch (err: unknown) {
@@ -229,19 +234,55 @@ export const useTodoStore = create<TodoState>()(
       },
 
       updateTodo: async (id, updates) => {
-        // 1. Optimistic Update
+        // Automatically add updatedAt timestamp to all updates
+        const timestampedUpdates = {
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Filter out fields that don't exist in the database
+        const dbFields = [
+          "id",
+          "title",
+          "description",
+          "status",
+          "label",
+          "priority",
+          "dueDate",
+          "imageUrl",
+          "order",
+          "projectName",
+          "completed",
+          "selected",
+          "isArchived",
+          "completionReason",
+          "userId",
+          "createdAt",
+          "updatedAt",
+        ];
+        const dbUpdates = Object.keys(timestampedUpdates)
+          .filter((key) => dbFields.includes(key))
+          .reduce(
+            (obj, key) => {
+              obj[key] = timestampedUpdates[key];
+              return obj;
+            },
+            {} as Record<string, any>,
+          );
+
+        // 1. Optimistic Update (use all fields for state)
         const previousTodos = get().todos;
         set((state) => ({
           todos: state.todos.map((t) =>
-            t.id === id ? { ...t, ...updates } : t
+            t.id === id ? { ...t, ...timestampedUpdates } : t,
           ),
         }));
 
         try {
-          // 2. Call API
+          // 2. Call API (use only database fields)
           const { error } = await supabase
             .from("Todo")
-            .update(updates)
+            .update(dbUpdates)
             .eq("id", id);
 
           if (error) throw error;
@@ -289,7 +330,7 @@ export const useTodoStore = create<TodoState>()(
             { ...todo, selected: true },
           ],
           todos: state.todos.map((t) =>
-            t.id === id ? { ...t, selected: true } : t
+            t.id === id ? { ...t, selected: true } : t,
           ),
         }));
 
@@ -305,7 +346,7 @@ export const useTodoStore = create<TodoState>()(
         set((state) => ({
           selectedTodos: state.selectedTodos.filter((t) => t.id !== id),
           todos: state.todos.map((t) =>
-            t.id === id ? { ...t, selected: false } : t
+            t.id === id ? { ...t, selected: false } : t,
           ),
         }));
 
@@ -425,7 +466,7 @@ export const useTodoStore = create<TodoState>()(
                     if (!currentTodos.find((t) => t.id === newTodo.id)) {
                       set((state) => ({
                         todos: [...state.todos, newTodo].sort(
-                          (a, b) => a.order - b.order
+                          (a, b) => a.order - b.order,
                         ),
                       }));
                     }
@@ -433,7 +474,7 @@ export const useTodoStore = create<TodoState>()(
                     const updatedTodo = payload.new as Todo;
                     set((state) => ({
                       todos: state.todos.map((t) =>
-                        t.id === updatedTodo.id ? updatedTodo : t
+                        t.id === updatedTodo.id ? updatedTodo : t,
                       ),
                     }));
                   } else if (payload.eventType === "DELETE" && payload.old) {
@@ -442,7 +483,7 @@ export const useTodoStore = create<TodoState>()(
                       todos: state.todos.filter((t) => t.id !== deletedId),
                     }));
                   }
-                }
+                },
               )
               .subscribe((status) => {
                 console.log("Subscription status:", status);
@@ -492,6 +533,6 @@ export const useTodoStore = create<TodoState>()(
         selectedTodos: state.selectedTodos,
         // Exclude subscription and other non-serializable data
       }),
-    }
-  )
+    },
+  ),
 );
