@@ -76,7 +76,12 @@ export default function TodoView({ todo }: TodoViewProps) {
               getStatusColor(todo.status),
             )}
           >
-            {todo.status.replace("_", " ")}
+            {todo.status
+              .replace("IN_PROGRESS", "In progress")
+              .replace("BACKLOG", "Backlog")
+              .replace("SELECTED", "Selected")
+              .replace("DONE", "Done")
+              .replace("_", " ")}
           </span>
         </div>
 
@@ -93,7 +98,10 @@ export default function TodoView({ todo }: TodoViewProps) {
                 getPriorityColor(todo.priority),
               )}
             >
-              {todo.priority}
+              {todo.priority
+                .replace("HIGH", "High")
+                .replace("MEDIUM", "Medium")
+                .replace("LOW", "Low")}
             </span>
           </div>
         )}

@@ -30,7 +30,7 @@ interface TodoFormProps {
 const statusOptions: { value: Status; label: string; color: string }[] = [
   { value: "BACKLOG", label: "Backlog", color: "bg-gray-500" },
   { value: "SELECTED", label: "Selected", color: "bg-blue-500" },
-  { value: "IN_PROGRESS", label: "In Progress", color: "bg-yellow-500" },
+  { value: "IN_PROGRESS", label: "In progress", color: "bg-yellow-500" },
 ];
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
@@ -136,6 +136,44 @@ export default function TodoForm({
               <X size={20} />
             </button>
           )}
+        </div>
+      )}
+
+      {/* Timestamps - only show when editing existing todo */}
+      {isEditing && todo && (
+        <div className="border-b border-border pb-4">
+          <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+            {todo.createdAt && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  <span>Created</span>
+                </div>
+                <div>
+                  {new Date(todo.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </div>
+              </div>
+            )}
+            {todo.updatedAt && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  <span>Updated</span>
+                </div>
+                <div>
+                  {new Date(todo.updatedAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

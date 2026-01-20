@@ -126,7 +126,7 @@ export default function Dashboard() {
                         Due Today
                       </span>
                       <span className="bg-white text-primary px-3 py-1 rounded-lg text-sm font-bold shadow-sm">
-                        In Progress
+                        In progress
                       </span>
                     </div>
                   </div>
@@ -248,7 +248,7 @@ export default function Dashboard() {
                   />
                   <input
                     type="text"
-                    defaultValue="In Progress"
+                    defaultValue="In progress"
                     className="w-full px-3 py-2 border border-border rounded-lg"
                   />
                   <input

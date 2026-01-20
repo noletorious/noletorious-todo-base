@@ -155,23 +155,10 @@ export const useTodoStore = create<TodoState>()(
             data: { user },
             error: authError,
           } = await supabase.auth.getUser();
-          console.log("Auth check:", { user: user?.id, authError });
 
           if (authError || !user) {
             throw new Error("User not logged in");
           }
-
-          // Test RLS by trying a simple select first
-          console.log("Testing RLS with select...");
-          const { data: testData, error: testError } = await supabase
-            .from("Todo")
-            .select("id")
-            .limit(1);
-
-          console.log("Test result:", { testData, testError });
-
-          // If select works, try insert
-          console.log("Attempting insert with user ID:", user.id);
 
           // 1. Optimistic Update
           const newTodo: Todo = {

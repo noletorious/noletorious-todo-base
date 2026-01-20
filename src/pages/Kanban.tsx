@@ -21,7 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useTodoStore, type Todo, type Status } from "../store/todoStore";
 import { cn } from "../lib/utils";
-import { GripVertical, Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import TodoCard from "../components/todos/TodoCard";
 import TodoForm from "../components/todos/TodoForm";
 import TodoView from "../components/todos/TodoView";
@@ -193,7 +193,7 @@ function Column({
 // --- Main Page ---
 
 export default function Kanban() {
-  const { todos, updateTodo, deleteTodo, loading } = useTodoStore();
+  const { todos, updateTodo, loading } = useTodoStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
@@ -214,7 +214,7 @@ export default function Kanban() {
 
   const columns: { id: Status; title: string }[] = [
     { id: "SELECTED", title: "Selected" },
-    { id: "IN_PROGRESS", title: "In Progress" },
+    { id: "IN_PROGRESS", title: "In progress" },
     { id: "DONE", title: "Done" },
   ];
 
@@ -320,8 +320,8 @@ export default function Kanban() {
       await updateTodo(taskToUndo.todo.id, {
         status: taskToUndo.newStatus,
         completed: false,
-        completedAt: null,
-        completionReason: null,
+        completedAt: undefined,
+        completionReason: undefined,
       });
     }
     setTaskToUndo(null);

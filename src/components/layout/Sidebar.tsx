@@ -1,6 +1,6 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store/authStore";
-import { useTheme } from "../theme-provider";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useAuthStore } from "../../store/authStore"
+import { useTheme } from "../theme-provider"
 import {
   CreditCard,
   LogIn,
@@ -12,37 +12,37 @@ import {
   Sun,
   Menu,
   X,
-} from "lucide-react";
-import { useState } from "react";
-import { cn } from "../../lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { InspirationButton } from "../ui/InspirationButton";
+} from "lucide-react"
+import { useState } from "react"
+import { cn } from "../../lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
+import { InspirationButton } from "../ui/InspirationButton"
 
 export function Sidebar() {
-  const { user, signOut } = useAuthStore();
-  const { theme, setTheme } = useTheme();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuthStore()
+  const { theme, setTheme } = useTheme()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
 
-  const toggleOpen = () => setIsOpen(!isOpen);
+  const toggleOpen = () => setIsOpen(!isOpen)
 
   // Auth methods
   const login = () => {
-    window.location.href = "/login";
-  };
+    window.location.href = "/login"
+  }
 
   const logout = async () => {
-    await signOut();
-  };
+    await signOut()
+  }
 
   const upgrade = () => {
-    navigate("/upgrade");
-  };
+    navigate("/upgrade")
+  }
 
   const downgrade = () => {
-    alert("Downgrade feature for debugging");
-  };
+    alert("Downgrade feature for debugging")
+  }
 
   const NavItem = ({
     to,
@@ -50,49 +50,49 @@ export function Sidebar() {
     label,
     locked = false,
   }: {
-    to: string;
-    icon: any;
-    label: string;
-    locked?: boolean;
+    to: string
+    icon: any
+    label: string
+    locked?: boolean
   }) => {
-    const isActive = location.pathname === to;
+    const isActive = location.pathname === to
     const handleClick = () => {
       if (locked) {
         // If dashboard is locked, navigate to upgrade page
-        navigate("/upgrade");
+        navigate("/upgrade")
       } else {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
+    }
 
     return (
       <Link
         to={locked ? "#" : to}
         onClick={handleClick}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mb-1",
+          "mb-1 flex items-center gap-3 rounded-lg px-4 py-3 transition-colors",
           isActive
-            ? "bg-primary/10 text-primary font-medium"
+            ? "bg-primary/10 font-medium text-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          locked && "opacity-50 cursor-pointer",
+          locked && "cursor-pointer opacity-50"
         )}
       >
         <Icon size={20} />
         <span>{label}</span>
         {locked && (
-          <span className="ml-auto text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground">
+          <span className="ml-auto rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             PRO
           </span>
         )}
       </Link>
-    );
-  };
+    )
+  }
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-card border-r border-border">
-      <div className="p-6 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-2 font-heading font-bold text-xl text-primary">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+    <div className="flex h-full flex-col border-r border-border bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-between border-b border-border p-6">
+        <div className="flex items-center gap-2 font-heading text-xl font-bold text-primary">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             A
           </div>
           AgileStart
@@ -102,33 +102,28 @@ export function Sidebar() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-6 px-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="space-y-1">
           <NavItem to="/backlog" icon={ListTodo} label="Backlog" />
           <NavItem to="/kanban" icon={KanbanSquare} label="Board" />
-          <NavItem
-            to="/"
-            icon={LayoutDashboard}
-            label="Dashboard"
-            locked={!user?.isPaid}
-          />
+          <NavItem to="/upgrade" icon={LayoutDashboard} label="Dashboard" />
         </div>
 
         <div className="mt-8">
           {!user ? (
-            <div className="p-4 bg-muted/50 rounded-xl space-y-3">
+            <div className="space-y-3 rounded-xl bg-muted/50 p-4">
               <p className="text-sm text-muted-foreground">
                 Log in to sync your tasks.
               </p>
               <button
                 onClick={login}
-                className="w-full flex items-center gap-2 justify-center bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:bg-primary/90 transition"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 font-medium text-primary-foreground transition hover:bg-primary/90"
               >
                 <LogIn size={18} /> Log In
               </button>
               <button
                 onClick={upgrade}
-                className="w-full flex items-center gap-2 justify-center border-2 border-primary text-primary py-2 rounded-lg font-bold hover:bg-primary/5 transition"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary py-2 font-bold text-primary transition hover:bg-primary/5"
               >
                 <CreditCard size={18} /> UPGRADE
               </button>
@@ -137,33 +132,33 @@ export function Sidebar() {
             <div className="space-y-4">
               <button
                 onClick={upgrade}
-                className="w-full flex items-center gap-2 justify-center bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all transform key-upgrade-btn"
+                className="key-upgrade-btn flex w-full transform items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-secondary py-3 font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
               >
                 UPGRADE TO PRO
               </button>
               <button
                 onClick={logout}
-                className="w-full flex items-center gap-2 justify-center bg-muted text-muted-foreground py-2 rounded-lg font-medium hover:bg-destructive hover:text-destructive-foreground transition"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-muted py-2 font-medium text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground"
               >
                 <LogOut size={18} /> Log Out
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center">
+              <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-center">
                 <p className="text-sm font-medium text-green-600">
                   You are a PRO member
                 </p>
                 <button
                   onClick={downgrade}
-                  className="text-xs underline text-muted-foreground mt-1"
+                  className="mt-1 text-xs text-muted-foreground underline"
                 >
                   Downgrade (Debug)
                 </button>
               </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center gap-2 justify-center bg-muted text-muted-foreground py-2 rounded-lg font-medium hover:bg-destructive hover:text-destructive-foreground transition"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-muted py-2 font-medium text-muted-foreground transition hover:bg-destructive hover:text-destructive-foreground"
               >
                 <LogOut size={18} /> Log Out
               </button>
@@ -176,14 +171,14 @@ export function Sidebar() {
         <div className="border-t border-border">
           {/* Support section for non-premium users */}
           {!user.isPaid && (
-            <div className="p-4 border-b border-border">
+            <div className="border-b border-border p-4">
               <a
                 href="https://buymeacoffee.com/noletorious"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl text-center hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-center transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:hover:bg-amber-900"
               >
-                <p className="text-xs font-bold text-amber-700 dark:text-amber-300 tracking-wider">
+                <p className="text-xs font-bold tracking-wider text-amber-700 dark:text-amber-300">
                   ☕️ Support the creators
                 </p>
               </a>
@@ -191,16 +186,16 @@ export function Sidebar() {
           )}
 
           {/* Inspiration and Theme toggle */}
-          <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center justify-between p-4">
             <InspirationButton />
-            <div className="flex bg-muted rounded-full p-1">
+            <div className="flex rounded-full bg-muted p-1">
               <button
                 onClick={() => setTheme("light")}
                 className={cn(
-                  "p-1.5 rounded-full transition-all",
+                  "rounded-full p-1.5 transition-all",
                   theme === "light"
-                    ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground",
+                    ? "bg-background text-foreground shadow"
+                    : "text-muted-foreground"
                 )}
               >
                 <Sun size={14} />
@@ -208,10 +203,10 @@ export function Sidebar() {
               <button
                 onClick={() => setTheme("system")}
                 className={cn(
-                  "p-1.5 rounded-full transition-all",
+                  "rounded-full p-1.5 transition-all",
                   theme === "system"
-                    ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground",
+                    ? "bg-background text-foreground shadow"
+                    : "text-muted-foreground"
                 )}
               >
                 <span className="text-[10px] font-bold">A</span>
@@ -219,10 +214,10 @@ export function Sidebar() {
               <button
                 onClick={() => setTheme("dark")}
                 className={cn(
-                  "p-1.5 rounded-full transition-all",
+                  "rounded-full p-1.5 transition-all",
                   theme === "dark"
-                    ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground",
+                    ? "bg-background text-foreground shadow"
+                    : "text-muted-foreground"
                 )}
               >
                 <Moon size={14} />
@@ -232,22 +227,22 @@ export function Sidebar() {
         </div>
       )}
     </div>
-  );
+  )
 
   return (
     <>
       {/* Mobile Toggle - Only show when not authenticated or on small screens */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
+      <div className="fixed left-4 top-4 z-50 md:hidden">
         <button
           onClick={toggleOpen}
-          className="p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-muted transition-colors"
+          className="rounded-lg border border-border bg-card p-2 shadow-sm transition-colors hover:bg-muted"
         >
           <Menu size={24} />
         </button>
       </div>
 
       {/* Desktop Sidebar - Always visible on desktop when authenticated */}
-      <div className="hidden md:block w-64 h-screen fixed left-0 top-0 z-40">
+      <div className="fixed left-0 top-0 z-40 hidden h-screen w-64 md:block">
         <SidebarContent />
       </div>
 
@@ -260,14 +255,14 @@ export function Sidebar() {
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={toggleOpen}
-              className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
             />
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-              className="fixed inset-y-0 left-0 w-3/4 max-w-sm bg-background z-50 md:hidden shadow-2xl"
+              className="fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm bg-gray-50 shadow-2xl dark:bg-gray-900 md:hidden"
             >
               <SidebarContent />
             </motion.div>
@@ -275,5 +270,5 @@ export function Sidebar() {
         )}
       </AnimatePresence>
     </>
-  );
+  )
 }
