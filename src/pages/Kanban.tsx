@@ -65,28 +65,20 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn("mb-3 group", isDragging && "opacity-50")}
+      className={cn("mb-3", isDragging && "opacity-50")}
     >
-      <div className="flex items-start gap-2">
-        <div
-          {...attributes}
-          {...listeners}
-          className="mt-1 opacity-60 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1.5 hover:bg-muted rounded-md touch-none"
-        >
-          <GripVertical size={16} className="text-muted-foreground" />
-        </div>
-        <div className="flex-1">
-          <TodoCard
-            todo={todo}
-            onEdit={onEdit}
-            onViewOnly={onViewOnly}
-            onStatusChange={onStatusChange}
-            isDragging={isDragging}
-            disableClick={isDragging}
-            showStatusDropdown={true}
-          />
-        </div>
-      </div>
+      <TodoCard
+        todo={todo}
+        onEdit={onEdit}
+        onViewOnly={onViewOnly}
+        onStatusChange={onStatusChange}
+        isDragging={isDragging}
+        disableClick={isDragging}
+        showStatusDropdown={true}
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        showDragHandle={true}
+      />
     </div>
   );
 }
@@ -207,6 +199,11 @@ export default function Kanban() {
   const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null);
+  const [showUndoModal, setShowUndoModal] = useState(false);
+  const [taskToUndo, setTaskToUndo] = useState<{
+    todo: Todo;
+    newStatus: Status;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -255,8 +252,13 @@ export default function Kanban() {
       }
 
       if (activeTodo && newStatus && activeTodo.status !== newStatus) {
+        // Special handling for dragging FROM DONE - show destructive confirmation
+        if (activeTodo.status === "DONE" && newStatus !== "DONE") {
+          setTaskToUndo({ todo: activeTodo, newStatus });
+          setShowUndoModal(true);
+        }
         // Special handling for dragging to DONE - show completion modal
-        if (newStatus === "DONE") {
+        else if (newStatus === "DONE") {
           setTaskToComplete(activeTodo);
           setShowCompletionModal(true);
         } else {
@@ -313,6 +315,19 @@ export default function Kanban() {
     }
   };
 
+  const handleUndoConfirm = async () => {
+    if (taskToUndo) {
+      await updateTodo(taskToUndo.todo.id, {
+        status: taskToUndo.newStatus,
+        completed: false,
+        completedAt: null,
+        completionReason: null,
+      });
+    }
+    setTaskToUndo(null);
+    setShowUndoModal(false);
+  };
+
   const handleClearDone = async () => {
     if (
       !window.confirm(
@@ -348,7 +363,6 @@ export default function Kanban() {
           Drag and drop tasks to manage your agile workflow.
         </p>
       </div>
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -379,7 +393,6 @@ export default function Kanban() {
           ) : null}
         </DragOverlay>
       </DndContext>
-
       {/* Edit Modal */}
       <Modal
         isOpen={!!editingTodo}
@@ -416,7 +429,6 @@ export default function Kanban() {
           />
         )}
       </Modal>
-
       {/* View-Only Modal */}
       <Modal
         isOpen={!!viewingTodo}
@@ -438,7 +450,6 @@ export default function Kanban() {
       >
         {viewingTodo && <TodoView todo={viewingTodo} />}
       </Modal>
-
       {/* Completion Modal */}
       <CompletionModal
         isOpen={showCompletionModal}
@@ -449,6 +460,73 @@ export default function Kanban() {
         onComplete={handleCompleteTask}
         taskTitle={taskToComplete?.title || ""}
       />
+      {/* Destructive Undo Modal */}
+      <Modal
+        isOpen={showUndoModal}
+        onClose={() => {
+          setShowUndoModal(false);
+          setTaskToUndo(null);
+        }}
+        title="Undo Completed Task"
+        size="md"
+      >
+        <div className="space-y-4 p-4">
+          <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <div className="w-10 h-10 bg-destructive/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-destructive"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.232 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-destructive">
+                Important Action
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                You are about to mark a completed task as incomplete. This will
+                remove its completion status and any completion notes.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Task: {taskToUndo?.todo.title}</h4>
+            {taskToUndo?.todo.completionReason && (
+              <p className="text-sm text-muted-foreground">
+                <strong>Completion reason:</strong>{" "}
+                {taskToUndo.todo.completionReason}
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <button
+              onClick={() => {
+                setShowUndoModal(false);
+                setTaskToUndo(null);
+              }}
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUndoConfirm}
+              className="px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg transition-colors"
+            >
+              Yes, Mark as Incomplete
+            </button>
+          </div>
+        </div>
+      </Modal>{" "}
     </div>
   );
 }

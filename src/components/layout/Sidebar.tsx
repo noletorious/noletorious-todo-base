@@ -74,7 +74,7 @@ export function Sidebar() {
           isActive
             ? "bg-primary/10 text-primary font-medium"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          locked && "opacity-50 cursor-not-allowed"
+          locked && "opacity-50 cursor-pointer",
         )}
       >
         <Icon size={20} />
@@ -174,17 +174,19 @@ export function Sidebar() {
 
       {user && (
         <div className="border-t border-border">
-          {/* Advertisement section for non-premium users */}
+          {/* Support section for non-premium users */}
           {!user.isPaid && (
             <div className="p-4 border-b border-border">
-              <div className="p-4 bg-secondary/10 border border-secondary/20 rounded-xl text-center">
-                <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
-                  Advertisement
+              <a
+                href="https://buymeacoffee.com/noletorious"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl text-center hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+              >
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-300 tracking-wider">
+                  ☕️ Support the creators
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Get the best coffee while you work! ☕️
-                </p>
-              </div>
+              </a>
             </div>
           )}
 
@@ -198,7 +200,7 @@ export function Sidebar() {
                   "p-1.5 rounded-full transition-all",
                   theme === "light"
                     ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 <Sun size={14} />
@@ -209,7 +211,7 @@ export function Sidebar() {
                   "p-1.5 rounded-full transition-all",
                   theme === "system"
                     ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 <span className="text-[10px] font-bold">A</span>
@@ -220,7 +222,7 @@ export function Sidebar() {
                   "p-1.5 rounded-full transition-all",
                   theme === "dark"
                     ? "bg-background shadow text-foreground"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 <Moon size={14} />

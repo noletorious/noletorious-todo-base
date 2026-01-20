@@ -6,6 +6,7 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronDown,
+  GripVertical,
 } from "lucide-react";
 import { useTodoStore, type Todo, type Status } from "../../store/todoStore";
 import { cn } from "../../lib/utils";
@@ -21,6 +22,9 @@ interface TodoCardProps {
   isDragging?: boolean;
   disableClick?: boolean;
   showStatusDropdown?: boolean;
+  dragAttributes?: any;
+  dragListeners?: any;
+  showDragHandle?: boolean;
 }
 
 const statusColors = {
@@ -47,6 +51,9 @@ export default function TodoCard({
   isDragging = false,
   disableClick = false,
   showStatusDropdown = false,
+  dragAttributes,
+  dragListeners,
+  showDragHandle = false,
 }: TodoCardProps) {
   const { updateTodo } = useTodoStore();
   const [imageError, setImageError] = useState(false);
@@ -142,6 +149,17 @@ export default function TodoCard({
       {/* Header with title and inline tags */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-1 flex-wrap">
+          {/* Drag Handle */}
+          {showDragHandle && (
+            <div
+              {...dragAttributes}
+              {...dragListeners}
+              className="opacity-60 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 hover:bg-muted/50 rounded-md touch-none flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical size={16} className="text-muted-foreground" />
+            </div>
+          )}
           <h3 className="font-medium text-foreground text-sm line-clamp-2 flex-1 min-w-0">
             {todo.title}
           </h3>
