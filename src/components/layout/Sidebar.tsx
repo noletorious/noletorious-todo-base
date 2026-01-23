@@ -16,7 +16,7 @@ import {
 import { useState } from "react"
 import { cn } from "../../lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
-import { InspirationButton } from "../ui/InspirationButton"
+import { UserSettingsButton } from "../ui/UserSettingsModal"
 
 export function Sidebar() {
   const { user, signOut } = useAuthStore()
@@ -169,25 +169,11 @@ export function Sidebar() {
 
       {user && (
         <div className="border-t border-border">
-          {/* Support section for non-premium users */}
-          {!user.isPaid && (
-            <div className="border-b border-border p-4">
-              <a
-                href="https://buymeacoffee.com/noletorious"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-center transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:hover:bg-amber-900"
-              >
-                <p className="text-xs font-bold tracking-wider text-amber-700 dark:text-amber-300">
-                  ☕️ Support the creators
-                </p>
-              </a>
-            </div>
-          )}
-
-          {/* Inspiration and Theme toggle */}
+          {/* Support link saved: https://buymeacoffee.com/noletorious */}
+          
+          {/* User Settings and Theme toggle */}
           <div className="flex items-center justify-between p-4">
-            <InspirationButton />
+            <UserSettingsButton />
             <div className="flex rounded-full bg-muted p-1">
               <button
                 onClick={() => setTheme("light")}
