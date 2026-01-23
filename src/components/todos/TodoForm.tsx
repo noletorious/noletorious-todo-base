@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from "react"
 import {
   Calendar,
   Tag,
@@ -8,36 +8,36 @@ import {
   X,
   Save,
   Loader2,
-} from "lucide-react";
+} from "lucide-react"
 import {
   useTodoStore,
   type Todo,
   type Status,
   type Priority,
-} from "../../store/todoStore";
-import { cn } from "../../lib/utils";
+} from "../../store/todoStore"
+import { cn } from "../../lib/utils"
 
 interface TodoFormProps {
-  todo?: Partial<Todo>;
-  onSubmit?: () => void;
-  onCancel?: () => void;
-  isEditing?: boolean;
-  showHeader?: boolean;
-  className?: string;
-  onStatusToggle?: (isDone: boolean) => void;
+  todo?: Partial<Todo>
+  onSubmit?: () => void
+  onCancel?: () => void
+  isEditing?: boolean
+  showHeader?: boolean
+  className?: string
+  onStatusToggle?: (isDone: boolean) => void
 }
 
 const statusOptions: { value: Status; label: string; color: string }[] = [
   { value: "BACKLOG", label: "Backlog", color: "bg-gray-500" },
   { value: "SELECTED", label: "Selected", color: "bg-blue-500" },
   { value: "IN_PROGRESS", label: "In progress", color: "bg-yellow-500" },
-];
+]
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
   { value: "LOW", label: "Low", color: "bg-green-100 text-green-800" },
   { value: "MEDIUM", label: "Medium", color: "bg-yellow-100 text-yellow-800" },
   { value: "HIGH", label: "High", color: "bg-red-100 text-red-800" },
-];
+]
 
 const labelOptions = [
   "Bug",
@@ -47,7 +47,7 @@ const labelOptions = [
   "Testing",
   "Design",
   "Research",
-];
+]
 
 export default function TodoForm({
   todo = {},
@@ -56,10 +56,9 @@ export default function TodoForm({
   isEditing = false,
   showHeader = true,
   className,
-  onStatusToggle,
 }: TodoFormProps) {
-  const { addTodo, updateTodo } = useTodoStore();
-  const [loading, setLoading] = useState(false);
+  const { addTodo, updateTodo } = useTodoStore()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: todo.title || "",
     description: todo.description || "",
@@ -68,13 +67,13 @@ export default function TodoForm({
     priority: todo.priority || ("MEDIUM" as Priority),
     dueDate: todo.dueDate ? todo.dueDate.split("T")[0] : "", // Convert to YYYY-MM-DD format
     imageUrl: todo.imageUrl || "",
-  });
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title.trim()) return;
+    e.preventDefault()
+    if (!formData.title.trim()) return
 
-    setLoading(true);
+    setLoading(true)
     try {
       const todoData = {
         ...formData,
@@ -82,29 +81,21 @@ export default function TodoForm({
           ? new Date(formData.dueDate).toISOString()
           : undefined,
         order: todo.order || Date.now(),
-      };
-
-      if (isEditing && todo.id) {
-        await updateTodo(todo.id, todoData);
-      } else {
-        await addTodo(todoData);
       }
 
-      onSubmit?.();
-    } catch (error) {
-      console.error("Error saving todo:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (isEditing && todo.id) {
+        await updateTodo(todo.id, todoData)
+      } else {
+        await addTodo(todoData)
+      }
 
-  const handleStatusToggle = () => {
-    const newStatus = formData.status === "DONE" ? "BACKLOG" : "DONE";
-    setFormData({ ...formData, status: newStatus });
-    if (onStatusToggle) {
-      onStatusToggle(newStatus === "DONE");
+      onSubmit?.()
+    } catch (error) {
+      console.error("Error saving todo:", error)
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   const handleCancel = () => {
     // Reset form to original values
@@ -116,9 +107,9 @@ export default function TodoForm({
       priority: todo.priority || "MEDIUM",
       dueDate: todo.dueDate ? todo.dueDate.split("T")[0] : "",
       imageUrl: todo.imageUrl || "",
-    });
-    onCancel?.();
-  };
+    })
+    onCancel?.()
+  }
 
   return (
     <form onSubmit={handleSubmit} className={cn("space-y-4 p-6", className)}>
@@ -131,7 +122,7 @@ export default function TodoForm({
             <button
               type="button"
               onClick={handleCancel}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground transition-colors hover:text-foreground"
             >
               <X size={20} />
             </button>
@@ -181,7 +172,7 @@ export default function TodoForm({
       <div>
         <label
           htmlFor="title"
-          className="block text-sm font-medium text-foreground mb-2"
+          className="mb-2 block text-sm font-medium text-foreground"
         >
           Task Title *
         </label>
@@ -191,7 +182,7 @@ export default function TodoForm({
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Enter task title..."
-          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           required
         />
       </div>
@@ -200,9 +191,9 @@ export default function TodoForm({
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-foreground mb-2"
+          className="mb-2 block text-sm font-medium text-foreground"
         >
-          <FileText className="inline w-4 h-4 mr-1" />
+          <FileText className="mr-1 inline h-4 w-4" />
           Description
         </label>
         <textarea
@@ -213,7 +204,7 @@ export default function TodoForm({
           }
           placeholder="Describe the task..."
           rows={3}
-          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground resize-none"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
@@ -222,7 +213,7 @@ export default function TodoForm({
         <div>
           <label
             htmlFor="status"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
             Status
           </label>
@@ -232,7 +223,7 @@ export default function TodoForm({
             onChange={(e) =>
               setFormData({ ...formData, status: e.target.value as Status })
             }
-            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -245,9 +236,9 @@ export default function TodoForm({
         <div>
           <label
             htmlFor="priority"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
-            <AlertCircle className="inline w-4 h-4 mr-1" />
+            <AlertCircle className="mr-1 inline h-4 w-4" />
             Priority
           </label>
           <select
@@ -256,7 +247,7 @@ export default function TodoForm({
             onChange={(e) =>
               setFormData({ ...formData, priority: e.target.value as Priority })
             }
-            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
             {priorityOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -272,9 +263,9 @@ export default function TodoForm({
         <div>
           <label
             htmlFor="label"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
-            <Tag className="inline w-4 h-4 mr-1" />
+            <Tag className="mr-1 inline h-4 w-4" />
             Label
           </label>
           <input
@@ -286,7 +277,7 @@ export default function TodoForm({
             }
             placeholder="e.g., Bug, Feature"
             list="labelSuggestions"
-            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           <datalist id="labelSuggestions">
             {labelOptions.map((label) => (
@@ -298,9 +289,9 @@ export default function TodoForm({
         <div>
           <label
             htmlFor="dueDate"
-            className="block text-sm font-medium text-foreground mb-2"
+            className="mb-2 block text-sm font-medium text-foreground"
           >
-            <Calendar className="inline w-4 h-4 mr-1" />
+            <Calendar className="mr-1 inline h-4 w-4" />
             Due Date
           </label>
           <input
@@ -310,7 +301,7 @@ export default function TodoForm({
             onChange={(e) =>
               setFormData({ ...formData, dueDate: e.target.value })
             }
-            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
       </div>
@@ -319,9 +310,9 @@ export default function TodoForm({
       <div>
         <label
           htmlFor="imageUrl"
-          className="block text-sm font-medium text-foreground mb-2"
+          className="mb-2 block text-sm font-medium text-foreground"
         >
-          <Image className="inline w-4 h-4 mr-1" />
+          <Image className="mr-1 inline h-4 w-4" />
           Image URL (Optional)
         </label>
         <input
@@ -332,21 +323,21 @@ export default function TodoForm({
             setFormData({ ...formData, imageUrl: e.target.value })
           }
           placeholder="https://example.com/image.jpg"
-          className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t border-border">
+      <div className="flex gap-3 border-t border-border pt-4">
         <button
           type="submit"
           disabled={loading || !formData.title.trim()}
-          className="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium transition-colors"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Save className="w-4 h-4" />
+            <Save className="h-4 w-4" />
           )}
           {isEditing ? "Update Task" : "Create Task"}
         </button>
@@ -355,12 +346,12 @@ export default function TodoForm({
           <button
             type="button"
             onClick={handleCancel}
-            className="px-6 py-2 border border-border rounded-lg hover:bg-muted text-foreground transition-colors"
+            className="rounded-lg border border-border px-6 py-2 text-foreground transition-colors hover:bg-muted"
           >
             Cancel
           </button>
         )}
       </div>
     </form>
-  );
+  )
 }
