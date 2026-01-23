@@ -104,9 +104,9 @@ export function Sidebar() {
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="space-y-1">
+          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem to="/backlog" icon={ListTodo} label="Backlog" />
           <NavItem to="/kanban" icon={KanbanSquare} label="Board" />
-          <NavItem to="/upgrade" icon={LayoutDashboard} label="Dashboard" />
         </div>
 
         <div className="mt-8">

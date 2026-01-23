@@ -27,7 +27,8 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="backlog" element={<Backlog />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="upgrade" element={<Upgrade />} />
