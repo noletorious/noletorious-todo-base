@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useTodoStore, type Todo } from "../store/todoStore";
+import { useState } from "react"
+import { useTodoStore, type Todo } from "../store/todoStore"
 import {
   Search,
   Plus,
@@ -8,13 +8,13 @@ import {
   CheckSquare,
   Square,
   Trash2,
-} from "lucide-react";
-import { Reorder } from "framer-motion";
-import TodoCard from "../components/todos/TodoCard";
-import TodoForm from "../components/todos/TodoForm";
-import TodoView from "../components/todos/TodoView";
-import Modal from "../components/ui/Modal";
-import { CompletionModal } from "../components/ui/CompletionModal";
+} from "lucide-react"
+import { Reorder } from "framer-motion"
+import TodoCard from "../components/todos/TodoCard"
+import TodoForm from "../components/todos/TodoForm"
+import TodoView from "../components/todos/TodoView"
+import Modal from "../components/ui/Modal"
+import { CompletionModal } from "../components/ui/CompletionModal"
 
 export default function Backlog() {
   const {
@@ -25,16 +25,16 @@ export default function Backlog() {
     unselectTodo,
     updateTodo,
     deleteTodo,
-  } = useTodoStore();
+  } = useTodoStore()
 
-  const [search, setSearch] = useState("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
-  const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false);
-  const [isDoneCollapsed, setIsDoneCollapsed] = useState(true);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null);
+  const [search, setSearch] = useState("")
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
+  const [viewingTodo, setViewingTodo] = useState<Todo | null>(null)
+  const [isBacklogCollapsed, setIsBacklogCollapsed] = useState(false)
+  const [isDoneCollapsed, setIsDoneCollapsed] = useState(true)
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [taskToComplete, setTaskToComplete] = useState<Todo | null>(null)
 
   // Sophisticated search: check title, label, description across all tasks including done ones
   const filteredTodos = todos.filter(
@@ -43,129 +43,127 @@ export default function Backlog() {
       t.title.toLowerCase().includes(search.toLowerCase()) ||
       (t.label && t.label.toLowerCase().includes(search.toLowerCase())) ||
       (t.description &&
-        t.description.toLowerCase().includes(search.toLowerCase())),
-  );
+        t.description.toLowerCase().includes(search.toLowerCase()))
+  )
 
   // Separate filtered todos by status for display
   const filteredBacklogTodos = filteredTodos.filter(
-    (todo) => todo.status !== "DONE",
-  );
+    (todo) => todo.status !== "DONE"
+  )
   const filteredDoneTodos = filteredTodos.filter(
-    (todo) => todo.status === "DONE",
-  );
+    (todo) => todo.status === "DONE"
+  )
 
   // Show only non-done tasks in backlog view when no search
   const backlogTodos =
     search === ""
       ? todos.filter((todo) => todo.status !== "DONE")
-      : filteredBacklogTodos;
+      : filteredBacklogTodos
 
   const handleTodoSelect = (todo: Todo) => {
     if (selectedTodos.some((t) => t.id === todo.id)) {
-      unselectTodo(todo.id);
+      unselectTodo(todo.id)
     } else {
-      selectTodo(todo.id);
+      selectTodo(todo.id)
     }
-  };
+  }
 
   const handleUndoneTask = async (todo: Todo) => {
     if (
       !window.confirm(
-        `Are you sure you want to mark "${todo.title}" as not done? This will move it back to your backlog.`,
+        `Are you sure you want to mark "${todo.title}" as not done? This will move it back to your backlog.`
       )
     ) {
-      return;
+      return
     }
 
     // Move task back to backlog status
     await updateTodo(todo.id, {
       status: "BACKLOG",
       completed: false,
-    });
-  };
+    })
+  }
 
   const handleDeleteTask = async (todo: Todo) => {
     if (
       !window.confirm(
-        `Are you sure you want to permanently delete "${todo.title}"? This action cannot be undone.`,
+        `Are you sure you want to permanently delete "${todo.title}"? This action cannot be undone.`
       )
     ) {
-      return;
+      return
     }
 
-    await deleteTodo(todo.id);
-  };
+    await deleteTodo(todo.id)
+  }
 
   const handleStatusChange = async (todo: Todo, newStatus: any) => {
     // If marking as done, trigger completion modal
     if (newStatus === "DONE") {
-      setTaskToComplete(todo);
-      setShowCompletionModal(true);
-      return;
+      setTaskToComplete(todo)
+      setShowCompletionModal(true)
+      return
     }
 
     const updates: Partial<Todo> = {
       status: newStatus,
-    };
+    }
 
-    await updateTodo(todo.id, updates);
-  };
+    await updateTodo(todo.id, updates)
+  }
 
   const handleEditTodo = (todo: Todo) => {
-    setEditingTodo(todo);
-  };
+    setEditingTodo(todo)
+  }
 
   const handleViewTodo = (todo: Todo) => {
-    setViewingTodo(todo);
-  };
+    setViewingTodo(todo)
+  }
 
   const handleCloseCreateModal = () => {
-    setShowCreateModal(false);
-  };
+    setShowCreateModal(false)
+  }
 
   const handleCloseEditModal = () => {
-    setEditingTodo(null);
-  };
+    setEditingTodo(null)
+  }
 
   const handleCloseViewModal = () => {
-    setViewingTodo(null);
-  };
+    setViewingTodo(null)
+  }
 
   const handleCompleteTask = async (reason: string, description?: string) => {
     if (taskToComplete) {
-      console.log("Task completed with reason:", reason);
+      console.log("Task completed with reason:", reason)
       await updateTodo(taskToComplete.id, {
         status: "DONE",
         completed: true,
         ...(description && { description: description }),
-      });
-      setTaskToComplete(null);
+      })
+      setTaskToComplete(null)
       // Close edit modal if open
-      setEditingTodo(null);
+      setEditingTodo(null)
     }
-  };
+  }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="animate-in fade-in mx-auto max-w-6xl space-y-6 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+          <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text font-heading text-3xl font-bold text-transparent">
             My Project - Backlog
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             Organize and plan your tasks
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-muted-foreground text-sm">
-            {search
-              ? `${filteredTodos.length} results`
-              : `${backlogTodos.length} tasks`}{" "}
-            • {selectedTodos.length} selected
+          <span className="text-sm text-muted-foreground">
+            {todos.filter((t) => t.status === "DONE").length} Done •{" "}
+            {todos.length} Total
           </span>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Plus size={20} />
             New Task
@@ -174,14 +172,14 @@ export default function Backlog() {
       </div>
 
       {/* Search bar */}
-      <div className="flex gap-4 items-center bg-card p-2 rounded-xl shadow-sm border border-border focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-        <Search className="text-muted-foreground ml-2" size={20} />
+      <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-2 shadow-sm transition-all focus-within:ring-2 focus-within:ring-primary/20">
+        <Search className="ml-2 text-muted-foreground" size={20} />
         <input
           type="text"
           placeholder="Search tasks, labels, descriptions..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-transparent border-none outline-none placeholder:text-muted-foreground/50"
+          className="flex-1 border-none bg-transparent outline-none placeholder:text-muted-foreground/50"
         />
       </div>
 
@@ -210,10 +208,10 @@ export default function Backlog() {
                 isDone: editingTodo.status === "DONE",
                 onToggle: () => {
                   if (editingTodo.status === "DONE") {
-                    handleUndoneTask(editingTodo);
+                    handleUndoneTask(editingTodo)
                   } else {
-                    setTaskToComplete(editingTodo);
-                    setShowCompletionModal(true);
+                    setTaskToComplete(editingTodo)
+                    setShowCompletionModal(true)
                   }
                 },
                 disabled: false,
@@ -244,8 +242,8 @@ export default function Backlog() {
                 isDone: true,
                 onToggle: () => {
                   // Allow undoing from backlog view
-                  handleUndoneTask(viewingTodo);
-                  handleCloseViewModal();
+                  handleUndoneTask(viewingTodo)
+                  handleCloseViewModal()
                 },
                 disabled: false,
               }
@@ -257,45 +255,44 @@ export default function Backlog() {
 
       <div className="space-y-6">
         {/* Backlog Tasks */}
-        <div className="bg-card rounded-xl shadow-sm border border-border">
-            <button
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <button
             onClick={() => setIsBacklogCollapsed(!isBacklogCollapsed)}
-            className={`w-full px-4 py-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors ${
+            className={`flex w-full items-center justify-between border-b border-border bg-card px-4 py-3 transition-colors hover:bg-muted/50 ${
               isBacklogCollapsed ? "rounded-xl" : "rounded-tl-xl rounded-tr-xl"
             }`}
-            >
+          >
             <div className="flex items-center gap-2">
               <Square size={20} className="text-muted-foreground" />
               <h2 className="font-semibold text-foreground">
-              {search ? "Search Results - Backlog" : "Backlog Tasks"}
+                {search ? "Search Results - Backlog" : "Backlog Tasks"}
               </h2>
-              <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs">
-              {search ? filteredBacklogTodos.length : backlogTodos.length}{" "}
-              total
+              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                {search ? filteredBacklogTodos.length : backlogTodos.length}
               </span>
               {(search ? filteredBacklogTodos : backlogTodos).filter(
-              (t) => t.status === "SELECTED",
+                (t) => t.status === "SELECTED"
               ).length > 0 && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                {
-                (search ? filteredBacklogTodos : backlogTodos).filter(
-                  (t) => t.status === "SELECTED",
-                ).length
-                }{" "}
-                Selected
-              </span>
+                <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  {
+                    (search ? filteredBacklogTodos : backlogTodos).filter(
+                      (t) => t.status === "SELECTED"
+                    ).length
+                  }{" "}
+                  Selected
+                </span>
               )}
               {(search ? filteredBacklogTodos : backlogTodos).filter(
-              (t) => t.status === "IN_PROGRESS",
+                (t) => t.status === "IN_PROGRESS"
               ).length > 0 && (
-              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
-                {
-                (search ? filteredBacklogTodos : backlogTodos).filter(
-                  (t) => t.status === "IN_PROGRESS",
-                ).length
-                }{" "}
-                In progress
-              </span>
+                <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
+                  {
+                    (search ? filteredBacklogTodos : backlogTodos).filter(
+                      (t) => t.status === "IN_PROGRESS"
+                    ).length
+                  }{" "}
+                  In Progress
+                </span>
               )}
             </div>
             {isBacklogCollapsed ? (
@@ -303,17 +300,17 @@ export default function Backlog() {
             ) : (
               <ChevronUp size={20} />
             )}
-            </button>
+          </button>
 
           {!isBacklogCollapsed && (
             <div className="p-4">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="py-8 text-center text-muted-foreground">
                   Loading tasks...
                 </div>
               ) : (search ? filteredBacklogTodos : backlogTodos).length ===
                 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="py-8 text-center text-muted-foreground">
                   <Square size={48} className="mx-auto mb-2 opacity-50" />
                   <p>
                     {search
@@ -343,12 +340,12 @@ export default function Backlog() {
                           onViewOnly={handleViewTodo}
                           onStatusChange={handleStatusChange}
                           isSelected={selectedTodos.some(
-                            (t) => t.id === todo.id,
+                            (t) => t.id === todo.id
                           )}
                           showStatusDropdown={true}
                         />
                       </Reorder.Item>
-                    ),
+                    )
                   )}
                 </Reorder.Group>
               )}
@@ -357,17 +354,17 @@ export default function Backlog() {
         </div>
 
         {/* Done Tasks */}
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <button
             onClick={() => setIsDoneCollapsed(!isDoneCollapsed)}
-            className="w-full px-4 py-3 bg-green-50 dark:bg-green-950/20 border-b border-border flex items-center justify-between hover:bg-green-100/50 dark:hover:bg-green-950/30 transition-colors"
+            className="flex w-full items-center justify-between border-b border-border bg-green-50 px-4 py-3 transition-colors hover:bg-green-100/50 dark:bg-green-950/20 dark:hover:bg-green-950/30"
           >
             <div className="flex items-center gap-2">
               <CheckSquare size={20} className="text-green-600" />
               <h2 className="font-semibold text-foreground">
                 {search ? "Search Results - Done" : "Done Tasks"}
               </h2>
-              <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded-full text-xs">
+              <span className="rounded-full bg-green-600/20 px-2 py-1 text-xs text-green-600 dark:text-green-400">
                 {search
                   ? filteredDoneTodos.length
                   : todos.filter((t) => t.status === "DONE").length}
@@ -385,7 +382,7 @@ export default function Backlog() {
                 ? filteredDoneTodos
                 : todos.filter((t) => t.status === "DONE")
               ).length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
+                <div className="py-6 text-center text-muted-foreground">
                   <CheckSquare size={48} className="mx-auto mb-2 opacity-50" />
                   <p>
                     {search
@@ -406,7 +403,7 @@ export default function Backlog() {
                   ).map((todo) => (
                     <div
                       key={todo.id}
-                      className="group p-3 bg-green-50/50 dark:bg-green-950/10 rounded-lg border border-green-200/50 dark:border-green-800/50 hover:bg-green-100/50 dark:hover:bg-green-950/20 transition-colors cursor-pointer"
+                      className="group cursor-pointer rounded-lg border border-green-200/50 bg-green-50/50 p-3 transition-colors hover:bg-green-100/50 dark:border-green-800/50 dark:bg-green-950/10 dark:hover:bg-green-950/20"
                       onClick={() => handleViewTodo(todo)}
                     >
                       <div className="flex items-center justify-between">
@@ -416,29 +413,29 @@ export default function Backlog() {
                               {todo.title}
                             </span>
                             {todo.label && (
-                              <span className="bg-green-600/20 text-green-600 px-2 py-1 rounded text-xs">
+                              <span className="rounded bg-green-600/20 px-2 py-1 text-xs text-green-600">
                                 {todo.label}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 ml-2 transition-all duration-200">
+                        <div className="ml-2 flex gap-1 opacity-0 transition-all duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
                           <button
                             onClick={(e) => {
-                              e.stopPropagation();
-                              handleUndoneTask(todo);
+                              e.stopPropagation()
+                              handleUndoneTask(todo)
                             }}
-                            className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded text-xs transition-colors"
+                            className="rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-800 transition-colors hover:bg-yellow-200"
                             title="Mark as not done"
                           >
                             Undone
                           </button>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteTask(todo);
+                              e.stopPropagation()
+                              handleDeleteTask(todo)
                             }}
-                            className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded text-xs transition-colors flex items-center gap-1"
+                            className="flex items-center gap-1 rounded bg-red-100 px-2 py-1 text-xs text-red-800 transition-colors hover:bg-red-200"
                             title="Delete forever"
                           >
                             <Trash2 size={10} />
@@ -459,12 +456,12 @@ export default function Backlog() {
       <CompletionModal
         isOpen={showCompletionModal}
         onClose={() => {
-          setShowCompletionModal(false);
-          setTaskToComplete(null);
+          setShowCompletionModal(false)
+          setTaskToComplete(null)
         }}
         onComplete={handleCompleteTask}
         taskTitle={taskToComplete?.title || ""}
       />
     </div>
-  );
+  )
 }

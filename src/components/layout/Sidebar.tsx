@@ -18,14 +18,49 @@ import { cn } from "../../lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { UserSettingsButton } from "../ui/UserSettingsModal"
 
+const inspirationQuotes = [
+  "The journey of a thousand miles begins with one step. - Lao Tzu",
+  "What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson",
+  "Believe you can and you're halfway there. - Theodore Roosevelt",
+  "The only way to do great work is to love what you do. - Steve Jobs",
+  "Innovation distinguishes between a leader and a follower. - Steve Jobs",
+  "Don't watch the clock; do what it does. Keep going. - Sam Levenson",
+  "Whether you think you can or you think you can't, you're right. - Henry Ford",
+  "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+  "The only impossible journey is the one you never begin. - Tony Robbins",
+  "In the middle of difficulty lies opportunity. - Albert Einstein",
+  "It is during our darkest moments that we must focus to see the light. - Aristotle",
+  "The way to get started is to quit talking and begin doing. - Walt Disney",
+  "Your limitation—it's only your imagination.",
+  "Push yourself, because no one else is going to do it for you.",
+  "Great things never come from comfort zones.",
+  "Dream it. Wish it. Do it.",
+  "Success doesn't just find you. You have to go out and get it.",
+  "The harder you work for something, the greater you'll feel when you achieve it.",
+  "Don't stop when you're tired. Stop when you're done.",
+]
+
 export function Sidebar() {
   const { user, signOut } = useAuthStore()
   const { theme, setTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
+  const [currentQuote, setCurrentQuote] = useState("")
+  const [showQuote, setShowQuote] = useState(false)
 
   const toggleOpen = () => setIsOpen(!isOpen)
+
+  const getRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * inspirationQuotes.length)
+    setCurrentQuote(inspirationQuotes[randomIndex])
+    setShowQuote(true)
+  }
+
+  const hideQuote = () => {
+    setShowQuote(false)
+  }
 
   // Auth methods
   const login = () => {
@@ -91,11 +126,21 @@ export function Sidebar() {
   const SidebarContent = () => (
     <div className="flex h-full flex-col border-r border-border bg-gray-50 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-border p-6">
-        <div className="flex items-center gap-2 font-heading text-xl font-bold text-primary">
+        <div
+          className="relative flex cursor-pointer items-center gap-2 font-heading text-xl font-bold text-primary transition-opacity hover:opacity-80"
+          onMouseEnter={getRandomQuote}
+          onMouseLeave={hideQuote}
+          onClick={getRandomQuote}
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             A
           </div>
           AgileStart
+          {showQuote && (
+            <div className="animate-in fade-in slide-in-from-top-2 absolute left-0 top-full z-[100] mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-popover p-4 text-sm text-popover-foreground shadow-xl duration-200">
+              <p className="italic leading-relaxed">{currentQuote}</p>
+            </div>
+          )}
         </div>
         <button className="md:hidden" onClick={toggleOpen}>
           <X size={24} />
@@ -170,7 +215,7 @@ export function Sidebar() {
       {user && (
         <div className="border-t border-border">
           {/* Support link saved: https://buymeacoffee.com/noletorious */}
-          
+
           {/* User Settings and Theme toggle */}
           <div className="flex items-center justify-between p-4">
             <UserSettingsButton />
